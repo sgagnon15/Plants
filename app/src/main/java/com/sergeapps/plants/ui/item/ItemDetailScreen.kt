@@ -386,6 +386,7 @@ fun ItemDetailScreen(
                                 light = state.itemDetail?.light,
                                 soil = state.itemDetail?.soil,
                                 water = state.itemDetail?.water,
+                                temperature = state.itemDetail?.temperature,
                                 temperatureMin = state.itemDetail?.temperatureMin,
                                 temperatureMax = state.itemDetail?.temperatureMax,
                                 dormancy = state.itemDetail?.dormancy,
@@ -658,21 +659,6 @@ private fun PhotoHeroCard(
                     }
                 }
             }
-/*
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                OutlinedButton(
-                    onClick = onPickPhoto,
-                    enabled = !isUploading,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(if (hasRemotePhoto) "Remplacer la photo" else "Choisir une photo")
-                }
-            }*/
         }
     }
 }
@@ -1039,6 +1025,7 @@ private fun CareInstructionsCard(
     light: String?,
     soil: String?,
     water: String?,
+    temperature: String?,
     temperatureMin: Int?,
     temperatureMax: Int?,
     dormancy: String?,
@@ -1099,12 +1086,17 @@ private fun CareInstructionsCard(
 
                     CareInstructionRow(
                         label = "Température",
+                        value = temperature
+                    )
+/*
+                    CareInstructionRow(
+                        label = "Température",
                         value = buildTemperatureText(
                             temperatureMin = temperatureMin,
                             temperatureMax = temperatureMax
                         )
                     )
-
+*/
                     CareInstructionRow(
                         label = "Dormance",
                         value = dormancy
@@ -1130,22 +1122,24 @@ private fun CareInstructionRow(
     }
 
     Column(
-        verticalArrangement = Arrangement.spacedBy(2.dp)
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Text(
             text = label,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontWeight = FontWeight.SemiBold
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.Bold
         )
 
         Text(
             text = value,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface
+            color = MaterialTheme.colorScheme.onSurface,
+            fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
         )
     }
 }
+
 
 private fun buildTemperatureText(
     temperatureMin: Int?,
