@@ -17,6 +17,7 @@ import com.sergeapps.plants.data.item.DeletePictureResponseDto
 import com.sergeapps.plants.data.item.UploadPicResponseDto
 import com.sergeapps.plants.ui.item.InventoryRowUi
 import com.sergeapps.plants.util.MultipartUtils
+import com.sergeapps.plants.vm.item.PlantCareDto
 
 
 class PlantsRepository(
@@ -224,6 +225,10 @@ class PlantsRepository(
 
     suspend fun deleteStock(stockId: Int) {
         api.deleteStock(stockId)
+    }
+
+    suspend fun getPlantCare(plantName: String): PlantCareDto {
+        return api.getPlantCare(plantName)
     }
 }
 

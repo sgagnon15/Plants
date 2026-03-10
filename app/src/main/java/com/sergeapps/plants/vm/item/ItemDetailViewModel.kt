@@ -27,6 +27,17 @@ private var pendingCameraPhotoUri: Uri? = null
 
 data class VendorUi(val name: String)
 
+data class PlantCareDto(
+    val arrosage: String?,
+    val lumière: String?,
+    val température: String?,
+    val engrais: String?,
+    val substrat: String?,
+    val dormance: String?,
+    val rempotage: String?,
+    val humidité: String?
+)
+
 data class ItemDetailUiState(
     val isLoading: Boolean = true,
     val error: String? = null,
@@ -56,8 +67,6 @@ data class ItemDetailUiState(
     val otherCare: String? = null,
     val humidity: String? = null,
     val temperature: String? = null,
-    val temperatureMin: Int? = null,
-    val temperatureMax: Int? = null,
 
     // --- PHOTO ---
     val imageUrl: String? = null,
@@ -87,6 +96,10 @@ class ItemDetailViewModel(app: Application) : AndroidViewModel(app) {
 
     private val uiState = MutableStateFlow(ItemDetailUiState())
     val state: StateFlow<ItemDetailUiState> = uiState.asStateFlow()
+
+    private val _loadingCareAi = MutableStateFlow(false)
+    val loadingCareAi: StateFlow<Boolean> = _loadingCareAi
+
 
     fun load(itemId: Int) {
         viewModelScope.launch {
@@ -122,8 +135,6 @@ class ItemDetailViewModel(app: Application) : AndroidViewModel(app) {
             runCatching {
                 repository.loadItemDetail(itemId)
             }.onSuccess { dto ->
-                println("DTO quantity = ${dto.quantity}")
-                println("DTO = $dto")
                 uiState.value = uiState.value.copy(
                     isLoading = false,
                     isNewItem = false,
@@ -141,10 +152,19 @@ class ItemDetailViewModel(app: Application) : AndroidViewModel(app) {
                     originText = dto.origin.orEmpty(),
                     wikiText = dto.wiki.orEmpty(),
                     vendorText = dto.vendor.orEmpty(),
-                    creationDateText = dto.creationDate.orEmpty()
+                    creationDateText = dto.creationDate.orEmpty(),
+                    light = dto.light,
+                    soil = dto.soil,
+                    water = dto.water,
+                    feed = dto.feed,
+                    dormancy = dto.dormancy,
+                    humidity = dto.humidity,
+                    transplant = dto.transplant,
+                    otherCare = dto.otherCare,
+                    temperature = dto.temperature
                 )
 
-                val itemNumber = dto.itemNumber?: 0
+                val itemNumber = dto.itemNumber ?: 0
                 if (itemNumber > 0) {
                     loadInventoryByItemNumber(itemNumber)
                 }
@@ -318,6 +338,7 @@ class ItemDetailViewModel(app: Application) : AndroidViewModel(app) {
             }
         }
     }
+
     fun onItemNumberChanged(value: String) {
         uiState.update { it.copy(itemNumberText = value) }
     }
@@ -341,10 +362,10 @@ class ItemDetailViewModel(app: Application) : AndroidViewModel(app) {
             throw IllegalArgumentException("Description requise")
         }
 
-        val vendor       = currentState.vendorText.trim()
-        val uom          = currentState.uomText.trim()
-        val barcode      = currentState.barcodeText.trim().ifBlank { null }
-        val vendorUrl    = currentState.vendorUrlText.trim().ifBlank { null }
+        val vendor = currentState.vendorText.trim()
+        val uom = currentState.uomText.trim()
+        val barcode = currentState.barcodeText.trim().ifBlank { null }
+        val vendorUrl = currentState.vendorUrlText.trim().ifBlank { null }
 
         val createdOrUpdatedId = if (currentState.isNewItem) {
             repository.createItem(
@@ -402,5 +423,40 @@ class ItemDetailViewModel(app: Application) : AndroidViewModel(app) {
                 quantity = value.toDoubleOrNull() ?: 0.0
             )
         }
+    }
+
+    fun fillCareInstructionsWithAI(plantName: String) {
+
+        viewModelScope.launch {
+            try {
+
+                _loadingCareAi.value = true
+
+                val care = repository.getPlantCare(plantName)
+                val current = uiState.value
+
+                uiState.value = current.copy(
+                    water = care.arrosage ?: current.water,
+                    light = care.lumière ?: current.light,
+                    temperature = care.température ?: current.temperature,
+                    feed = care.engrais ?: current.feed,
+                    soil = care.substrat ?: current.soil,
+                    dormancy = care.dormance ?: current.dormancy,
+                    transplant = care.rempotage ?: current.transplant,
+                    humidity = care.humidité ?: current.humidity
+                )
+
+            } catch (e: Exception) {
+
+                e.printStackTrace()
+
+            } finally {
+
+                _loadingCareAi.value = false
+
+            }
+
+        }
+
     }
 }

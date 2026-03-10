@@ -50,9 +50,7 @@ data class ItemDetailDto(
     @SerialName("transplant")   val transplant: String? = null,
     @SerialName("otherCare")    val otherCare: String? = null,
     @SerialName("humidity")     val humidity: String? = null,
-    @SerialName("temperature")  val temperature: String? = null,
-    @SerialName("temperatureMin") val temperatureMin: Int? = null,
-    @SerialName("temperatureMax") val temperatureMax: Int? = null
+    @SerialName("temperature")  val temperature: String? = null
 )
 
 @Serializable

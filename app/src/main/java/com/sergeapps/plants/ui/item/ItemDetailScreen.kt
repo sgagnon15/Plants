@@ -110,6 +110,10 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.Photo
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontStyle
+import com.sergeapps.plants.R
 
 data class InventoryRowUi(
     val stockId: Int,
@@ -130,6 +134,7 @@ fun ItemDetailScreen(
     val context = LocalContext.current
     var showDeletePhotoDialog by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
+    val loadingCareAi by viewModel.loadingCareAi.collectAsState()
 
     val pickImageLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent(),
@@ -382,16 +387,24 @@ fun ItemDetailScreen(
                         }
 
                         item {
-                            CareInstructionsCard(
-                                light = state.itemDetail?.light,
-                                soil = state.itemDetail?.soil,
-                                water = state.itemDetail?.water,
-                                temperature = state.itemDetail?.temperature,
-                                temperatureMin = state.itemDetail?.temperatureMin,
-                                temperatureMax = state.itemDetail?.temperatureMax,
-                                dormancy = state.itemDetail?.dormancy,
-                                feed = state.itemDetail?.feed
-                            )
+                            state.itemDetail?.let {
+                                CareInstructionsCard(
+                                    light = state.light,
+                                    soil = state.soil,
+                                    water = state.water,
+                                    temperature = state.temperature,
+                                    dormancy = state.dormancy,
+                                    feed = state.feed,
+                                    botanicalVar = state.botanicalvarText,
+                                    onAiFill = {
+                                        viewModel.fillCareInstructionsWithAI(
+                                            state.itemDetail?.botanicalVar ?: state.botanicalvarText
+                                        )                                    }
+/*                                    onAiFill = {
+                                        viewModel.fillCareInstructionsWithAI(state.botanicalvarText)
+                                    }*/
+                                )
+                            }
                         }
 
                         item {
@@ -1026,10 +1039,10 @@ private fun CareInstructionsCard(
     soil: String?,
     water: String?,
     temperature: String?,
-    temperatureMin: Int?,
-    temperatureMax: Int?,
     dormancy: String?,
-    feed: String?
+    feed: String?,
+    botanicalVar: String,
+    onAiFill: () -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -1055,6 +1068,32 @@ private fun CareInstructionsCard(
                     fontWeight = FontWeight.SemiBold
                 )
 
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+/*
+                    IconButton(onClick = { onAiFill() }) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_chatgpt),
+                            contentDescription = "Remplir avec ChatGPT",
+                            tint = Color.Unspecified,
+                            modifier = Modifier.size(40.dp)
+                        )
+                    }*/
+                    IconButton(
+                        onClick = {
+                            onAiFill()
+                        }
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_chatgpt),
+                            contentDescription = "Remplir avec ChatGPT",
+                            tint = Color.Unspecified,
+                            modifier = Modifier.size(40.dp)
+                        )
+                    }
+                }
+
                 Icon(
                     imageVector = if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
                     contentDescription = if (expanded) "Réduire" else "Développer"
@@ -1069,42 +1108,47 @@ private fun CareInstructionsCard(
                 Column(
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
+                    var lightValue by remember { mutableStateOf(light ?: "") }
+                    var soilValue by remember { mutableStateOf(soil ?: "") }
+                    var waterValue by remember { mutableStateOf(water ?: "") }
+                    var temperatureValue by remember { mutableStateOf(temperature ?: "") }
+                    var dormancyValue by remember { mutableStateOf(dormancy ?: "") }
+                    var feedValue by remember { mutableStateOf(feed ?: "") }
+
                     CareInstructionRow(
                         label = "Lumière",
-                        value = light
+                        value = lightValue,
+                        onValueChange = { lightValue = it }
                     )
 
                     CareInstructionRow(
                         label = "Sol",
-                        value = soil
+                        value = soilValue,
+                        onValueChange = { soilValue = it }
                     )
 
                     CareInstructionRow(
                         label = "Arrosage",
-                        value = water
+                        value = waterValue,
+                        onValueChange = { waterValue = it }
                     )
 
                     CareInstructionRow(
                         label = "Température",
-                        value = temperature
+                        value = temperatureValue,
+                        onValueChange = { temperatureValue = it }
                     )
-/*
-                    CareInstructionRow(
-                        label = "Température",
-                        value = buildTemperatureText(
-                            temperatureMin = temperatureMin,
-                            temperatureMax = temperatureMax
-                        )
-                    )
-*/
+
                     CareInstructionRow(
                         label = "Dormance",
-                        value = dormancy
+                        value = dormancyValue,
+                        onValueChange = { dormancyValue = it }
                     )
 
                     CareInstructionRow(
                         label = "Fertilisation",
-                        value = feed
+                        value = feedValue,
+                        onValueChange = { feedValue = it }
                     )
                 }
             }
@@ -1115,54 +1159,28 @@ private fun CareInstructionsCard(
 @Composable
 private fun CareInstructionRow(
     label: String,
-    value: String?
+    value: String?,
+    onValueChange: (String) -> Unit
 ) {
-    if (value.isNullOrBlank()) {
-        return
-    }
-
     Column(
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
+
         Text(
             text = label,
-            style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.titleSmall
         )
 
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-            fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+        OutlinedTextField(
+            value = value ?: "",
+            onValueChange = onValueChange,
+            modifier = Modifier.fillMaxWidth(),
+            textStyle = MaterialTheme.typography.bodyMedium.copy(
+                fontStyle = FontStyle.Italic
+            )
         )
-    }
-}
-
-
-private fun buildTemperatureText(
-    temperatureMin: Int?,
-    temperatureMax: Int?
-): String? {
-    if (temperatureMin == null && temperatureMax == null) {
-        return null
-    }
-
-    if ((temperatureMin ?: 0) == 0 && (temperatureMax ?: 0) == 0) {
-        return null
-    }
-
-    return when {
-        temperatureMin != null && temperatureMax != null -> {
-            "$temperatureMin à $temperatureMax °C"
-        }
-        temperatureMin != null -> {
-            "Min. $temperatureMin °C"
-        }
-        else -> {
-            "Max. $temperatureMax °C"
-        }
     }
 }
 
