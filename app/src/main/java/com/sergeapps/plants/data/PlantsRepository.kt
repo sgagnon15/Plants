@@ -1,0 +1,229 @@
+package com.sergeapps.plants.data
+
+import android.content.Context
+import android.net.Uri
+import com.sergeapps.plants.data.api.CreateLocationBody
+import com.sergeapps.plants.data.api.ItemDetailDto
+import com.sergeapps.plants.data.api.ItemListDto
+import com.sergeapps.plants.data.api.ItemUpsertDto
+import com.sergeapps.plants.data.api.LocationDto
+import com.sergeapps.plants.data.api.PlantsApiService
+import com.sergeapps.plants.data.api.StockDetailDto
+import com.sergeapps.plants.data.api.StockListRowDto
+import com.sergeapps.plants.data.api.StockUpsertRequest
+import com.sergeapps.plants.data.api.UpdateLocationBody
+import com.sergeapps.plants.data.api.VendorRowDto
+import com.sergeapps.plants.data.item.DeletePictureResponseDto
+import com.sergeapps.plants.data.item.UploadPicResponseDto
+import com.sergeapps.plants.ui.item.InventoryRowUi
+import com.sergeapps.plants.util.MultipartUtils
+
+
+class PlantsRepository(
+    private val api: PlantsApiService
+) {
+    // --- ITEMS ---
+
+    suspend fun createItem(
+        itemNumber: Int,
+        botanicalvar: String,
+        uom: String,
+        vendor: String,
+        barcode: String? = null,
+        vendorUrl: String? = null
+    ): Int {
+        api.upsertItem(
+            itemId = 0,
+            body = ItemUpsertDto(
+                itemNumber = itemNumber,
+                botanicalVar = botanicalvar,
+                uom = uom,
+                vendor = vendor,
+                barcode = barcode,
+                vendorUrl = vendorUrl
+            )
+        )
+        return itemNumber
+    }
+
+    suspend fun updateItem(
+        itemId: Int,
+        itemNumber: Int,
+        botanicalvar: String,
+        uom: String,
+        vendor: String,
+        barcode: String? = null,
+        vendorUrl: String? = null
+    ) {
+        api.upsertItem(
+            itemId = itemId,
+            body = ItemUpsertDto(
+                itemNumber = itemNumber,
+                botanicalVar = botanicalvar,
+                uom = uom,
+                vendor = vendor,
+                barcode = barcode,
+                vendorUrl = vendorUrl
+            )
+        )
+    }
+
+    suspend fun getNextItemNumber(): Int {
+        return api.getNextItem().nextItem
+    }
+
+    suspend fun loadItemsPage(
+        page: Int,
+        nbItems: Int,
+        orderBy: String = "botanicalvar",
+        filter: String? = null
+    ): List<ItemListDto> {
+        return api.getItemList(
+            pageNumber = page,
+            orderBy = "botanicalvar",
+            nbItems = nbItems,
+            filter  = filter?.takeIf { it.isNotBlank() }
+        )
+    }
+
+    suspend fun loadItemDetail(itemId: Int): ItemDetailDto {
+        return api.getItemDetail(id = itemId)
+    }
+
+    // --- PHOTO ---
+
+    suspend fun uploadPhoto(
+        context: Context,
+        itemId: Int,
+        uri: Uri
+    ): UploadPicResponseDto {
+        val part = MultipartUtils.uriToMultipart(
+            context = context,
+            uri = uri,
+            partName = "file" // le nom n'est pas important pour ton busboy, mais c'est plus clair
+        )
+
+        return api.uploadPic(
+            id = itemId,
+            file = part
+        )
+    }
+
+    suspend fun deletePhoto(itemId: Int, pictureUrl: String): DeletePictureResponseDto {
+        return api.deletePicture(
+            id = itemId,
+            url = pictureUrl
+        )
+    }
+
+    // --- VENDORS & MANUFACTURERS ---
+
+    suspend fun loadVendors(
+        pageNumber: Int,
+        nbItems: Int
+    ): List<VendorRowDto> {
+        return api.getVendorList(
+            nbItems = nbItems,
+            pageNumber = pageNumber
+        )
+    }
+
+    // --- LOCATIONS ---
+
+    suspend fun loadLocations(): List<LocationDto> {
+        return api.getLocations()
+            .sortedBy { dto -> dto.location.uppercase() }
+    }
+
+    suspend fun getLocations(): List<LocationDto> {
+        return api.getLocations()
+    }
+
+    suspend fun createLocation(location: String, nbBin: Int) {
+        val body = CreateLocationBody(location = location, nbBin = nbBin)
+        return api.createLocation(locationQuery = location, body = body)
+    }
+
+    suspend fun updateLocation(id: Int, location: String, nbBin: Int, type: String) {
+        val body = UpdateLocationBody(
+            location = location,
+            nbBin = nbBin,
+            type = type
+        )
+        return api.updateLocation(id = id, body = body)
+    }
+
+    suspend fun getLocationUsageCount(locationValue: String): Int {
+        val dto = api.getWhereUsed(
+            tableName = "stock",
+            attrName = "location",
+            value = locationValue
+        )
+        return dto.occurrence
+    }
+
+    suspend fun deleteLocation(id: Int) {
+        api.deleteLocation(id)
+    }
+
+    // --- INVENTORY ---
+
+    suspend fun loadStockListPage(
+        location: String,
+        page: Int,
+        nbItems: Int,
+        orderBy: String = "Position"
+    ): List<StockListRowDto> {
+        return api.getStockList(
+            nbItems = nbItems,
+            orderBy = orderBy,
+            pageNumber = page,
+            location = location
+        )
+    }
+
+    suspend fun loadStockDetail(
+        stockId: Int,
+        itemNumber: Int? = null
+    ): StockDetailDto {
+        return api.getStockDetail(stockId, itemNumber)
+    }
+
+    suspend fun upsertStock(
+        stockId: Int,
+        body: StockUpsertRequest
+    ): Int {
+        val response = api.upsertStock(
+            stockId = stockId,
+            body = body
+        )
+
+        return response.stockId
+    }
+
+    suspend fun fetchInventoryByItemNumber(
+        itemNumber: Int
+    ): List<InventoryRowUi> {
+
+        val response = api.getStockList(
+            itemNumber = itemNumber,
+            pageNumber = 1,
+            nbItems = 200
+        )
+
+        return response.map { dto ->
+
+            InventoryRowUi(
+                stockId = dto.id,
+                location = dto.location?.trim().orEmpty(),
+                binNum = dto.binNum?.trim(),
+                quantity = dto.quantity?.toDouble()?: 0.0
+            )
+        }
+    }
+
+    suspend fun deleteStock(stockId: Int) {
+        api.deleteStock(stockId)
+    }
+}
+
