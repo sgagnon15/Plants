@@ -241,7 +241,6 @@ fun ItemDetailScreen(
             }
 
             else -> {
-                // ✅ Item "virtuel" en création, réel en consultation
                 val itemForUi: ItemDetailDto = state.itemDetail ?: ItemDetailDto(
                     id = 0,
                     itemNumber = state.itemNumberText.ifBlank { "" },

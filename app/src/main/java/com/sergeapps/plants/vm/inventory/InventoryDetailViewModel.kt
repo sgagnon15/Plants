@@ -27,7 +27,9 @@ data class InventoryDetailUiState(
     val locations: List<LocationDto> = emptyList(),
     val isLoadingLocations: Boolean = false,
     val initialItemNumber: String = "",
-    val stockTrans: StockTransUiState = StockTransUiState()
+    val stockTrans: StockTransUiState = StockTransUiState(),
+
+    val vendorText: String? = null
 )
 
 data class StockTransUiState(
@@ -220,25 +222,23 @@ class InventoryDetailViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun openStockTransDialog() {
-        uiState.update {
-            it.copy(
-                stockTrans = it.stockTrans.copy(
-                    isDialogOpen = true,
-                    postError = null
-                )
-            )
-        }
+    fun onVendorChanged(value: String) {
+        uiState.update { it.copy(vendorText = value) }
+    }
+/*
+    fun onCommonNameChanged(value: String) {
+        uiState.update { it.copy(commonnameText = value) }
     }
 
-    fun closeStockTransDialog() {
-        uiState.update {
-            it.copy(
-                stockTrans = it.stockTrans.copy(
-                    isDialogOpen = false,
-                    postError = null
-                )
-            )
-        }
+    fun onCultivarChanged(value: String) {
+        uiState.update { it.copy(cultivarText = value) }
     }
+
+    fun onOriginChanged(value: String) {
+        uiState.update { it.copy(originText = value) }
+    }
+
+    fun onWikiChanged(value: String) {
+        uiState.update { it.copy(wikiText = value) }
+    }*/
 }

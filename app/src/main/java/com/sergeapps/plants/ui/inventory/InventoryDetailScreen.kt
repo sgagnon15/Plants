@@ -52,14 +52,19 @@ import coil.request.ImageRequest
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
 import com.sergeapps.plants.helper.formatIsoUtcToLocal
 import com.sergeapps.plants.ui.item.DetailRow
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -121,9 +126,6 @@ fun InventoryDetailScreen(
                             contentDescription = "Supprimer",
                             tint = MaterialTheme.colorScheme.error
                         )
-                    }
-                    IconButton(onClick = { viewModel.openStockTransDialog() }) {
-                        Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = "Sortir l'article")
                     }
                 }
             )
@@ -297,9 +299,40 @@ fun InventoryDetailScreen(
                         modifier = Modifier.padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        DetailRow(
+                        PropertyRow(
                             label = "Fournisseur",
-                            value = "${detail?.vendor.orEmpty()}"
+                            value = detail?.vendor.orEmpty(),
+                            onChange = viewModel::onVendorChanged
+                        )
+
+                        PropertyRow(
+                            label = "Date d'achat",
+                            value = detail?.purchaseDate.orEmpty(),
+                            onChange = viewModel::onVendorChanged
+                        )
+
+                        PropertyRow(
+                            label = "Transplantation",
+                            value = detail?.lastTransplant.orEmpty(),
+                            onChange = viewModel::onVendorChanged
+                        )
+
+                        PropertyRow(
+                            label = "Division",
+                            value = detail?.lastDivision.orEmpty(),
+                            onChange = viewModel::onVendorChanged
+                        )
+
+                        PropertyRow(
+                            label = "Fertilisation",
+                            value = detail?.lastFeeding.orEmpty(),
+                            onChange = viewModel::onVendorChanged
+                        )
+
+                        PropertyRow(
+                            label = "Prix payé",
+                            value = detail?.purchasePrice.toString(),
+                            onChange = viewModel::onVendorChanged
                         )
 
                         DetailRow(
@@ -342,7 +375,65 @@ fun InventoryDetailScreen(
     }
 }
 
+@Composable
+fun EditableRow(
+    label: String,
+    value: String,
+    onChange: (String) -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
 
+        Text(
+            text = label,
+            modifier = Modifier.width(100.dp)
+        )
 
+        TextField(
+            value = value,
+            onValueChange = onChange,
+            textStyle = MaterialTheme.typography.bodySmall,
+            modifier = Modifier
+                .weight(1f)
+                .height(52.dp),
+            singleLine = true
+        )
+    }
+}
 
+@Composable
+fun PropertyRow(
+    label: String,
+    value: String,
+    onChange: (String) -> Unit
+) {
 
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 1.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+
+        Text(
+            text = label,
+            modifier = Modifier.width(130.dp),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        BasicTextField(
+            value = value,
+            onValueChange = onChange,
+            modifier = Modifier
+                .weight(1f)
+                .height(26.dp),
+            singleLine = true,
+            textStyle = MaterialTheme.typography.bodySmall.copy(
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        )
+    }
+}
