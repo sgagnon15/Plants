@@ -29,8 +29,38 @@ data class InventoryDetailUiState(
     val initialItemNumber: String = "",
     val stockTrans: StockTransUiState = StockTransUiState(),
 
-    val vendorText: String? = null
+    val vendorText: String = "",
+    val purchaseDateText: String = "",
+    val lastTransplantText: String = "",
+    val lastDivisionText: String = "",
+    val lastFeedingText: String = "",
+    val purchasePriceText: String = ""
 )
+/*
+data class InventoryDetailUiState(
+    val isLoading: Boolean = true,
+    val isSaving: Boolean = false,
+    val error: String? = null,
+    val detail: StockDetailDto? = null,
+    val editLocation: String = "",
+    val editBinNum: String = "",
+    val locations: List<LocationDto> = emptyList(),
+    val isLoadingLocations: Boolean = false,
+    val initialItemNumber: String = "",
+    val stockTrans: StockTransUiState = StockTransUiState(),
+
+    val vendorText: String = "",
+    val purchaseDateText: String = "",
+    val lastTransplantText: String = "",
+    val lastDivisionText: String = "",
+    val lastFeedingText: String = "",
+    val purchasePriceText: String = "",
+
+    val editPurchaseDate: String = "",
+    val editLastTransplant: String = "",
+    val editLastDivision: String = "",
+    val editLastFeeding: String = ""
+)*/
 
 data class StockTransUiState(
     val isDialogOpen: Boolean = false,
@@ -72,15 +102,22 @@ class InventoryDetailViewModel(app: Application) : AndroidViewModel(app) {
                     it.copy(
                         isLoading = false,
                         detail = detail,
-                        initialItemNumber = detail.itemNumber, //initialItemNumber,
+                        initialItemNumber = detail.itemNumber,
                         editLocation = detail.location.orEmpty(),
                         editBinNum = detail.binNum.orEmpty(),
+
+                        vendorText = detail.vendor.orEmpty(),
+                        purchaseDateText = detail.purchaseDate.orEmpty(),
+                        lastTransplantText = detail.lastTransplant.orEmpty(),
+                        lastDivisionText = detail.lastDivision.orEmpty(),
+                        lastFeedingText = detail.lastFeeding.orEmpty(),
+                        purchasePriceText = detail.purchasePrice?.toString().orEmpty(),
+
                         error = null
                     )
                 }
 
                 loadLocations()
-                return@launch
             } catch (e: Exception) {
                 uiState.update {
                     it.copy(
@@ -91,6 +128,7 @@ class InventoryDetailViewModel(app: Application) : AndroidViewModel(app) {
             }
         }
     }
+
 
     fun startEditing() {
         val detail = uiState.value.detail ?: return
@@ -122,7 +160,8 @@ class InventoryDetailViewModel(app: Application) : AndroidViewModel(app) {
         }
 
         val isNewStock = (current.detail == null)
-        val itemNumberToSave = if (isNewStock) current.initialItemNumber else current.detail!!.itemNumber
+        val itemNumberToSave =
+            if (isNewStock) current.initialItemNumber else current.detail!!.itemNumber
         val stockIdToSave = if (isNewStock) 0 else current.detail!!.stockId
 
         if (isNewStock) {
@@ -141,7 +180,11 @@ class InventoryDetailViewModel(app: Application) : AndroidViewModel(app) {
                 val body = StockUpsertRequest(
                     itemNumber = itemNumberToSave,
                     location = newLocation,
-                    binNum = newBinNum
+                    binNum = newBinNum,
+                    purchaseDate = current.purchaseDateText,
+                    lastTransplant = current.lastTransplantText,
+                    lastDivision = current.lastDivisionText,
+                    lastFeeding = current.lastFeedingText
                 )
 
                 val returnedStockId = repo.upsertStock(stockId = stockIdToSave, body = body)
@@ -225,20 +268,20 @@ class InventoryDetailViewModel(app: Application) : AndroidViewModel(app) {
     fun onVendorChanged(value: String) {
         uiState.update { it.copy(vendorText = value) }
     }
-/*
-    fun onCommonNameChanged(value: String) {
-        uiState.update { it.copy(commonnameText = value) }
+
+    fun onPurchaseDateChanged(value: String) {
+        uiState.update { it.copy(purchaseDateText = value) }
     }
 
-    fun onCultivarChanged(value: String) {
-        uiState.update { it.copy(cultivarText = value) }
+    fun onLastTransplantChanged(value: String) {
+        uiState.update { it.copy(lastTransplantText = value) }
     }
 
-    fun onOriginChanged(value: String) {
-        uiState.update { it.copy(originText = value) }
+    fun onLastDivisionChanged(value: String) {
+        uiState.update { it.copy(lastDivisionText = value) }
     }
 
-    fun onWikiChanged(value: String) {
-        uiState.update { it.copy(wikiText = value) }
-    }*/
+    fun onLastFeedingChanged(value: String) {
+        uiState.update { it.copy(lastFeedingText = value) }
+    }
 }

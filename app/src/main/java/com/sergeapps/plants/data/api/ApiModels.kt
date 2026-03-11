@@ -134,9 +134,13 @@ data class StockDetailDto(
 
 @Serializable
 data class StockUpsertRequest(
-    @SerialName("itemnumber") val itemNumber: String,
-    @SerialName("location") val location: String,
-    @SerialName("binnum") val binNum: String
+    @SerialName("itemnumber")     val itemNumber: String,
+    @SerialName("location")       val location: String,
+    @SerialName("binnum")         val binNum: String,
+    @SerialName("purchaseDate")   val purchaseDate: String,
+    @SerialName("lastTransplant") val lastTransplant: String,
+    @SerialName("lastDivision")   val lastDivision: String,
+    @SerialName("lastFeeding")    val lastFeeding: String
 )
 
 @Serializable

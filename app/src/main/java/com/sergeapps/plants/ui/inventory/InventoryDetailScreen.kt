@@ -5,8 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Card
@@ -33,8 +31,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.platform.LocalFocusManager
 
 import androidx.compose.foundation.background
@@ -61,11 +57,13 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
 import com.sergeapps.plants.helper.formatIsoUtcToLocal
 import com.sergeapps.plants.ui.item.DetailRow
-import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import android.app.DatePickerDialog
+import java.util.Calendar
+import java.text.SimpleDateFormat
+import java.util.Locale
+import androidx.compose.material.icons.filled.DateRange
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -301,37 +299,41 @@ fun InventoryDetailScreen(
                     ) {
                         PropertyRow(
                             label = "Fournisseur",
-                            value = detail?.vendor.orEmpty(),
+                            value = state.vendorText,
                             onChange = viewModel::onVendorChanged
                         )
 
-                        PropertyRow(
+                        DatePickerRow(
                             label = "Date d'achat",
-                            value = detail?.purchaseDate.orEmpty(),
-                            onChange = viewModel::onVendorChanged
+                            value = state.purchaseDateText,
+                            onChange = viewModel::onPurchaseDateChanged,
+                            enabled = isEditing
                         )
 
-                        PropertyRow(
+                        DatePickerRow(
                             label = "Transplantation",
-                            value = detail?.lastTransplant.orEmpty(),
-                            onChange = viewModel::onVendorChanged
+                            value = state.lastTransplantText,
+                            onChange = viewModel::onLastTransplantChanged,
+                            enabled = isEditing
                         )
 
-                        PropertyRow(
+                        DatePickerRow(
                             label = "Division",
-                            value = detail?.lastDivision.orEmpty(),
-                            onChange = viewModel::onVendorChanged
+                            value = state.lastDivisionText,
+                            onChange = viewModel::onLastDivisionChanged,
+                            enabled = isEditing
                         )
 
-                        PropertyRow(
+                        DatePickerRow(
                             label = "Fertilisation",
-                            value = detail?.lastFeeding.orEmpty(),
-                            onChange = viewModel::onVendorChanged
+                            value = state.lastFeedingText,
+                            onChange = viewModel::onLastFeedingChanged,
+                            enabled = isEditing
                         )
 
                         PropertyRow(
                             label = "Prix payé",
-                            value = detail?.purchasePrice.toString(),
+                            value = state?.purchasePriceText.toString(),
                             onChange = viewModel::onVendorChanged
                         )
 
@@ -435,5 +437,87 @@ fun PropertyRow(
                 color = MaterialTheme.colorScheme.onSurface
             )
         )
+    }
+}
+
+
+@Composable
+fun DatePickerRow(
+    label: String,
+    value: String,
+    onChange: (String) -> Unit,
+    enabled: Boolean = true
+) {
+    val context = LocalContext.current
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Text(
+            text = label,
+            modifier = Modifier.width(130.dp),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        BasicTextField(
+            value = value,
+            onValueChange = {},
+            modifier = Modifier
+                .weight(1f)
+                .height(10.dp),
+            singleLine = true,
+            enabled = false,
+            textStyle = MaterialTheme.typography.bodySmall.copy(
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        )
+
+        IconButton(
+            onClick = {
+                if (!enabled) return@IconButton
+                val calendar = Calendar.getInstance()
+
+                if (value.isNotBlank()) {
+                    try {
+                        val parsedDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(value)
+                        if (parsedDate != null) {
+                            calendar.time = parsedDate
+                        }
+                    } catch (_: Exception) {
+                    }
+                }
+
+                DatePickerDialog(
+                    context,
+                    { _, year, month, dayOfMonth ->
+                        val pickedDate = String.format(
+                            Locale.getDefault(),
+                            "%04d-%02d-%02d",
+                            year,
+                            month + 1,
+                            dayOfMonth
+                        )
+                        onChange(pickedDate)
+                    },
+                    calendar.get(Calendar.YEAR),
+                    calendar.get(Calendar.MONTH),
+                    calendar.get(Calendar.DAY_OF_MONTH)
+                ).show()
+            }
+        ) {
+            Icon(
+                imageVector = Icons.Filled.DateRange,
+                contentDescription = "Choisir une date",
+                tint = if (enabled) {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                } else {
+                    MaterialTheme.colorScheme.outline
+                }
+            )
+        }
     }
 }
