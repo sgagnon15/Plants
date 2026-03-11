@@ -129,7 +129,7 @@ fun ItemDetailScreen(
     itemId: Int,
     onBack: () -> Unit,
     onOpenInventoryDetail: (Int) -> Unit,
-    onAddToInventory: (Int) -> Unit,
+    onAddToInventory: (String) -> Unit,
     viewModel: ItemDetailViewModel = viewModel()
 ) {
     val context = LocalContext.current
@@ -244,7 +244,7 @@ fun ItemDetailScreen(
                 // ✅ Item "virtuel" en création, réel en consultation
                 val itemForUi: ItemDetailDto = state.itemDetail ?: ItemDetailDto(
                     id = 0,
-                    itemNumber = state.itemNumberText.toIntOrNull() ?: 0,
+                    itemNumber = state.itemNumberText.ifBlank { "" },
                     botanicalVar = state.botanicalvarText.ifBlank { "" },
                     commonName = state.commonnameText.ifBlank { "" },
                     cultivar = state.cultivarText.ifBlank { "" },
@@ -422,7 +422,7 @@ fun ItemDetailScreen(
                                 totalQuantity = state.quantity.toDouble(),
                                 rows = state.inventoryByLocation,
                                 onRowSelected = { selected -> onOpenInventoryDetail(selected.stockId) },
-                                itemNumber = (state.itemDetail?.itemNumber ?: state.itemNumberText.toIntOrNull() ?: itemId),
+                                itemNumber = ((state.itemDetail?.itemNumber ?: state.itemNumberText.toString() ?: itemId).toString()),
                                 onAddToInventory = onAddToInventory
                             )
                         }
@@ -1202,8 +1202,8 @@ private fun TotalInventoryCardDropdown(
     totalQuantity: Double,
     rows: List<InventoryRowUi>,
     onRowSelected: (InventoryRowUi) -> Unit,
-    itemNumber: Int,
-    onAddToInventory: (Int) -> Unit
+    itemNumber: String,
+    onAddToInventory: (String) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
 

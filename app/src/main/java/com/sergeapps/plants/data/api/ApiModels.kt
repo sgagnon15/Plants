@@ -8,7 +8,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class ItemUpsertDto(
-    @SerialName("itemnumber")   val itemNumber: Int,
+    @SerialName("itemnumber")   val itemNumber: String,
     @SerialName("botanicalVar") val botanicalVar: String,
     @SerialName("commonName")   val commonName: String? = null,
     @SerialName("cultivar")     val cultivar: String? = null,
@@ -36,7 +36,7 @@ data class NextItemDto(
 @Serializable
 data class ItemDetailDto(
     @SerialName("id") val id: Int,
-    @SerialName("itemnumber")   val itemNumber: Int,
+    @SerialName("itemnumber")   val itemNumber: String,
     @SerialName("botanicalVar") val botanicalVar: String,
     @SerialName("commonName")   val commonName: String,
     @SerialName("quantity")     val quantity: Int = 0,
@@ -77,7 +77,7 @@ data class PlantCareDto(
 @Serializable
 data class ItemListDto(
     @SerialName("id")           val id: Int,
-    @SerialName("itemnumber")   val itemNumber: Int,
+    @SerialName("itemnumber")   val itemNumber: String,
     @SerialName("botanicalVar") val botanicalVar: String,
     @SerialName("commonName")   val commonName: String,
     @SerialName("quantity")     val quantity: Double,
@@ -98,50 +98,45 @@ data class ItemListDto(
 
 @Serializable
 data class StockListRowDto(
-    @SerialName("pagenumber") val pageNumber: String? = null,
-    @SerialName("itemnumber") val itemNumber: String,
-    @SerialName("location") val location: String,
-    @SerialName("binnum") val binNum: String,
-    @SerialName("quantity") val quantity: String,
-    @SerialName("id") val stockId: Int,
-    @SerialName("botanicalvar") val botanicalvar: String,
-    @SerialName("thumbnailurl") val thumbnailurl: String? = null,
-    @SerialName("photoversion") val photoVersion: Int? = null
+    @SerialName("pagenumber")       val pagenumber: Int,
+    @SerialName("itemnumber")       val itemNumber: String,
+    @SerialName("specimennumber")   val specimenNumber: Int? = null,
+    @SerialName("picturerotation")  val picturerotation: Int,
+    @SerialName("location")         val location: String,
+    @SerialName("position")         val binNum: String,
+    @SerialName("id")               val stockId: Int,
+    @SerialName("commonName")       val commonName: String,
+    @SerialName("botanicalvar")     val botanicalvar: String,
+    @SerialName("thumbnailurl")     val thumbnailurl: String? = null,
+    @SerialName("photoversion")     val photoVersion: Int? = null
 )
 
 @Serializable
 data class StockDetailDto(
-    @SerialName("location") val location: String,
-    @SerialName("binnum") val binNum: String,
-    @SerialName("quantity") val quantity: String,
-    @SerialName("stockId") val stockId: Int,
-
-    @SerialName("id") val itemId: Int,
-    @SerialName("itemnumber") val itemNumber: Int,
-    @SerialName("botanicalvar") val botanicalvar: String,
-    @SerialName("uom") val uom: String? = null,
-    @SerialName("barcode") val barcode: String? = null,
-    @SerialName("manufacturer") val manufacturer: String? = null,
-    @SerialName("vendor") val vendor: String? = null,
-    @SerialName("minlevel") val minLevel: String? = null,
-    @SerialName("maxlevel") val maxLevel: String? = null,
-    @SerialName("creationdate") val creationDate: String? = null,
-    @SerialName("sku") val sku: String? = null,
-    @SerialName("vendorUrl") val vendorUrl: String? = null,
-    @SerialName("classid") val classId: Int? = null,
-    @SerialName("modelnum") val modelNum: String? = null,
-    @SerialName("avgcost") val avgCost: String? = null,
-    @SerialName("classdesc") val classDesc: String? = null,
-    @SerialName("url") val url: String? = null,
-    @SerialName("photoversion") val photoVersion: Int? = null
+    @SerialName("id")               val stockId: Int,
+    @SerialName("specimennumber")   val specimenNumber: Int? = null,
+    @SerialName("itemnumber")       val itemNumber: String,
+    @SerialName("creationDate")     val creationDate: String,
+    @SerialName("location")         val location: String,
+    @SerialName("position")         val binNum: String,
+    @SerialName("purchaseDate")     val purchaseDate: String?,
+    @SerialName("lastTransplant")   val lastTransplant: String?,
+    @SerialName("lastDivision")     val lastDivision: String?,
+    @SerialName("lastFeeding")      val lastFeeding: String?,
+    @SerialName("purchasePrice")    val purchasePrice: Double?,
+    @SerialName("fromSpecimen")     val fromSpecimen: String?,
+    @SerialName("vendor")           val vendor: String?,
+    @SerialName("url")              val url: String?,
+    @SerialName("botanicalvar")     val botanicalvar: String,
+    @SerialName("thumbnailurl")     val thumbnailurl: String? = null,
+    @SerialName("photoversion")     val photoVersion: Int? = null
 )
 
 @Serializable
 data class StockUpsertRequest(
-    @SerialName("itemnumber") val itemNumber: Int,
+    @SerialName("itemnumber") val itemNumber: String,
     @SerialName("location") val location: String,
-    @SerialName("binnum") val binNum: String,
-    @SerialName("quantity") val quantity: Int
+    @SerialName("binnum") val binNum: String
 )
 
 @Serializable
@@ -167,7 +162,7 @@ data class StockListDto(
 @Serializable
 data class StockCreateResponseDto(
     @SerialName("stockid") val stockId: Int,
-    @SerialName("itemnumber") val itemNumber: Int
+    @SerialName("itemnumber") val itemNumber: String
 )
 
 @Serializable

@@ -27,7 +27,7 @@ class PlantsRepository(
     // --- ITEMS ---
 
     suspend fun createItem(
-        itemNumber: Int,
+        itemNumber: String,
         botanicalvar: String,
         commonName: String? = null,
         cultivar: String? = null,
@@ -39,7 +39,7 @@ class PlantsRepository(
         temperature: String? = null,
         dormancy: String? = null,
         feed: String? = null
-    ): Int {
+    ): String {
         api.upsertItem(
             itemId = 0,
             body = ItemUpsertDto(
@@ -63,7 +63,7 @@ class PlantsRepository(
 
     suspend fun updateItem(
         itemId: Int,
-        itemNumber: Int,
+        itemNumber: String,
         botanicalvar: String,
         commonName: String? = null,
         cultivar: String? = null,
@@ -212,7 +212,7 @@ class PlantsRepository(
 
     suspend fun loadStockDetail(
         stockId: Int,
-        itemNumber: Int? = null
+        itemNumber: String? = null
     ): StockDetailDto {
         return api.getStockDetail(stockId, itemNumber)
     }
@@ -230,7 +230,7 @@ class PlantsRepository(
     }
 
     suspend fun fetchInventoryByItemNumber(
-        itemNumber: Int
+        itemNumber: String
     ): List<InventoryRowUi> {
 
         val response = api.getStockList(

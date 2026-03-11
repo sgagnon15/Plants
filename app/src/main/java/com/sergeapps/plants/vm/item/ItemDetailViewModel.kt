@@ -171,9 +171,10 @@ class ItemDetailViewModel(app: Application) : AndroidViewModel(app) {
                     temperature = dto.temperature
                 )
 
-                val itemNumber = dto.itemNumber ?: 0
-                if (itemNumber > 0) {
-                    loadInventoryByItemNumber(itemNumber)
+                dto.itemNumber?.let { itemNumber ->
+                    if (itemNumber > "") {
+                        loadInventoryByItemNumber(itemNumber.toString())
+                    }
                 }
             }.onFailure { e ->
                 uiState.value = ItemDetailUiState(
@@ -191,7 +192,9 @@ class ItemDetailViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun uploadPickedPhoto(context: Context) {
-        val itemId = uiState.value.itemId ?: return
+        val itemId = uiState.value.itemId
+        if (itemId == 0) return
+
         val uri = uiState.value.localSelectedPhotoUri ?: return
 
         viewModelScope.launch {
@@ -230,9 +233,12 @@ class ItemDetailViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun deletePhoto() {
-        val itemId = uiState.value.itemId ?: return
+        val itemId = uiState.value.itemId
+        if (itemId == 0) return
+
         val pictureUrl = uiState.value.imageUrl ?: return
-        val repo = repository ?: return
+        if (!::repository.isInitialized) return
+        val repo = repository
 
         viewModelScope.launch {
             uiState.update { it.copy(isUploadingPhoto = true, error = null) }
@@ -312,7 +318,7 @@ class ItemDetailViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private fun loadInventoryByItemNumber(
-        itemNumber: Int
+        itemNumber: String
     ) {
         viewModelScope.launch {
 
@@ -358,7 +364,8 @@ class ItemDetailViewModel(app: Application) : AndroidViewModel(app) {
         uiState.update { it.copy(uomText = value) }
     }
 
-    suspend fun save(): Int {
+    suspend fun save(): Comparable<Nothing> {
+
         uiState.update {
             it.copy(
                 isSaving = true,
@@ -368,16 +375,15 @@ class ItemDetailViewModel(app: Application) : AndroidViewModel(app) {
             )
         }
 
-        return try {
+        val result = try {
+
             val currentState = uiState.value
 
             val itemNumber = currentState.itemNumberText.trim().toIntOrNull()
                 ?: throw IllegalArgumentException("No. article invalide")
 
             val botanicalvar = currentState.botanicalvarText.trim()
-            if (botanicalvar.isBlank()) {
-                throw IllegalArgumentException("Description requise")
-            }
+                .ifBlank { throw IllegalArgumentException("Description requise") }
 
             val vendor = currentState.vendorText.trim()
             val uom = currentState.uomText.trim()
@@ -385,8 +391,9 @@ class ItemDetailViewModel(app: Application) : AndroidViewModel(app) {
             val vendorUrl = currentState.vendorUrlText.trim().ifBlank { null }
 
             val createdOrUpdatedId = if (currentState.isNewItem) {
+
                 repository.createItem(
-                    itemNumber = itemNumber,
+                    itemNumber = itemNumber.toString(),
                     botanicalvar = botanicalvar,
                     commonName = currentState.commonnameText.trim(),
                     cultivar = currentState.cultivarText.trim(),
@@ -399,12 +406,17 @@ class ItemDetailViewModel(app: Application) : AndroidViewModel(app) {
                     dormancy = currentState.dormancy?.trim().orEmpty(),
                     feed = currentState.feed?.trim().orEmpty()
                 )
+
             } else {
-                val existingId = currentState.itemId ?: throw IllegalStateException("itemId manquant")
+
+                val existingId = currentState.itemId
+                if (existingId == 0) {
+                    throw IllegalStateException("itemId manquant")
+                }
 
                 repository.updateItem(
                     itemId = existingId,
-                    itemNumber = itemNumber,
+                    itemNumber = itemNumber.toString(),
                     botanicalvar = botanicalvar,
                     commonName = currentState.commonnameText.trim(),
                     cultivar = currentState.cultivarText.trim(),
@@ -430,7 +442,9 @@ class ItemDetailViewModel(app: Application) : AndroidViewModel(app) {
             }
 
             createdOrUpdatedId
+
         } catch (e: Exception) {
+
             uiState.update {
                 it.copy(
                     isSaving = false,
@@ -439,8 +453,11 @@ class ItemDetailViewModel(app: Application) : AndroidViewModel(app) {
                     error = e.message
                 )
             }
+
             throw e
         }
+
+        return result
     }
 
     fun onBarcodeChanged(value: String) {

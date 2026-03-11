@@ -24,10 +24,9 @@ data class InventoryDetailUiState(
     val detail: StockDetailDto? = null,
     val editLocation: String = "",
     val editBinNum: String = "",
-    val editQuantity: String = "",
     val locations: List<LocationDto> = emptyList(),
     val isLoadingLocations: Boolean = false,
-    val initialItemNumber: Int = 0,
+    val initialItemNumber: String = "",
     val stockTrans: StockTransUiState = StockTransUiState()
 )
 
@@ -55,7 +54,7 @@ class InventoryDetailViewModel(app: Application) : AndroidViewModel(app) {
     val state: StateFlow<InventoryDetailUiState> = uiState.asStateFlow()
     private var repository: PlantsRepository? = null
 
-    fun load(stockId: Int, initialItemNumber: Int = 0) {
+    fun load(stockId: Int, initialItemNumber: String = "") {
         viewModelScope.launch {
             try {
                 uiState.update { it.copy(isLoading = true, error = null) }
@@ -74,7 +73,6 @@ class InventoryDetailViewModel(app: Application) : AndroidViewModel(app) {
                         initialItemNumber = detail.itemNumber, //initialItemNumber,
                         editLocation = detail.location.orEmpty(),
                         editBinNum = detail.binNum.orEmpty(),
-                        editQuantity = detail.quantity.toString().orEmpty(),
                         error = null
                     )
                 }
@@ -97,7 +95,6 @@ class InventoryDetailViewModel(app: Application) : AndroidViewModel(app) {
         uiState.value = uiState.value.copy(
             editLocation = detail.location,
             editBinNum = detail.binNum,
-            editQuantity = detail.quantity,
             error = null
         )
     }
@@ -106,16 +103,11 @@ class InventoryDetailViewModel(app: Application) : AndroidViewModel(app) {
         uiState.value = uiState.value.copy(editBinNum = value)
     }
 
-    fun updateQuantity(value: String) {
-        uiState.value = uiState.value.copy(editQuantity = value)
-    }
-
     fun saveChanges() {
         val current = uiState.value
 
         val newLocation = current.editLocation.trim()
         val newBinNum = current.editBinNum.trim()
-        val newQuantityStr = current.editQuantity.trim()
 
         if (newLocation.isBlank()) {
             uiState.value = current.copy(error = "Emplacement invalide")
@@ -127,21 +119,11 @@ class InventoryDetailViewModel(app: Application) : AndroidViewModel(app) {
             return
         }
 
-        val quantityInt = newQuantityStr
-            .replace(',', '.')
-            .toDoubleOrNull()
-            ?.toInt()
-
-        if (quantityInt == null) {
-            uiState.value = current.copy(error = "Quantité invalide")
-            return
-        }
-
         val isNewStock = (current.detail == null)
         val itemNumberToSave = if (isNewStock) current.initialItemNumber else current.detail!!.itemNumber
         val stockIdToSave = if (isNewStock) 0 else current.detail!!.stockId
 
-        if (isNewStock && itemNumberToSave <= 0) {
+        if (isNewStock) {
             uiState.value = current.copy(error = "No. article invalide")
             return
         }
@@ -157,8 +139,7 @@ class InventoryDetailViewModel(app: Application) : AndroidViewModel(app) {
                 val body = StockUpsertRequest(
                     itemNumber = itemNumberToSave,
                     location = newLocation,
-                    binNum = newBinNum,
-                    quantity = quantityInt
+                    binNum = newBinNum
                 )
 
                 val returnedStockId = repo.upsertStock(stockId = stockIdToSave, body = body)
@@ -172,7 +153,6 @@ class InventoryDetailViewModel(app: Application) : AndroidViewModel(app) {
                     initialItemNumber = refreshed.itemNumber,
                     editLocation = refreshed.location.orEmpty(),
                     editBinNum = refreshed.binNum.orEmpty(),
-                    editQuantity = refreshed.quantity?.toString().orEmpty(),
                     error = null
                 )
             } catch (e: Exception) {

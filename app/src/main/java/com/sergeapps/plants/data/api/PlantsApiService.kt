@@ -110,7 +110,7 @@ interface PlantsApiService {
 
     @GET("stocklist")
     suspend fun getStockList(
-        @Query("itemnumber") itemNumber: Int,
+        @Query("itemnumber") itemNumber: String,
         @Query("pagenumber") pageNumber: Int = 1,
         @Query("nbitems") nbItems: Int = 200
     ): List<StockListDto>
@@ -118,7 +118,7 @@ interface PlantsApiService {
     @GET("stockdetail")
     suspend fun getStockDetail(
         @Query("id") stockId: Int,
-        @Query("itemnumber") itemNumber: Int? = null
+        @Query("itemnumber") itemNumber: String? = null
     ): StockDetailDto
 
     @POST("location")

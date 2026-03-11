@@ -77,7 +77,7 @@ fun plantsApp() {
             )
         ) { backStackEntry ->
             val stockId = backStackEntry.arguments?.getInt("stockId") ?: 0
-            val itemNumber = backStackEntry.arguments?.getInt("itemNumber") ?: 0
+            val itemNumber = backStackEntry.arguments?.getString("itemNumber") ?: ""
 
             InventoryDetailScreen(
                 stockId = stockId,

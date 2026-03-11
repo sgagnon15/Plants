@@ -226,7 +226,7 @@ fun InventoryScreen(
 
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "${row.binNum}  •  #${row.itemNumber}",
+                                    text = "${row.binNum}",
                                     style = MaterialTheme.typography.titleMedium
                                 )
                                 Text(
@@ -235,13 +235,6 @@ fun InventoryScreen(
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
-
-                            Spacer(modifier = Modifier.width(12.dp))
-
-                            Text(
-                                text = row.quantity,
-                                style = MaterialTheme.typography.titleLarge
-                            )
                         }
                     }
                 }

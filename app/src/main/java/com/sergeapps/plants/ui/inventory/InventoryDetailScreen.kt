@@ -66,12 +66,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 @Composable
 fun InventoryDetailScreen(
     stockId: Int,
-    initialItemNumber: Int = 0,
+    initialItemNumber: String = "",
     onBack: () -> Unit,
     onOpenItemDetail: (Int) -> Unit,
     viewModel: InventoryDetailViewModel = viewModel()
 ) {
-    //val state by viewModel.state.collectAsState()
     val state by viewModel.state.collectAsStateWithLifecycle()
     val detail    = state.detail
     val isAddMode = (stockId == 0)
@@ -223,7 +222,7 @@ fun InventoryDetailScreen(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(6.dp))
                                 .clickable {
-                                    detail?.itemId?.let { onOpenItemDetail(it) }
+                                    detail?.stockId?.let { onOpenItemDetail(it) }
                                 }
                                 .padding(vertical = 4.dp)
                         )
@@ -288,23 +287,6 @@ fun InventoryDetailScreen(
                         }
 
                         val focusManager = LocalFocusManager.current
-
-                        OutlinedTextField(
-                            value = state.editQuantity,
-                            onValueChange = { viewModel.updateQuantity(it) },
-                            label = { Text("Quantité") },
-                            singleLine = true,
-                            textStyle = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.fillMaxWidth(),
-                            readOnly = !isEditing,
-                            keyboardOptions = KeyboardOptions(
-                                keyboardType = KeyboardType.Number,
-                                imeAction = ImeAction.Done
-                            ),
-                            keyboardActions = KeyboardActions(
-                                onDone = { focusManager.clearFocus() }
-                            )
-                        )
                     }
                 }
             }
@@ -316,28 +298,8 @@ fun InventoryDetailScreen(
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         DetailRow(
-                            label = "Fabricant",
-                            value = "${detail?.manufacturer.orEmpty()}"
-                        )
-
-                        DetailRow(
                             label = "Fournisseur",
                             value = "${detail?.vendor.orEmpty()}"
-                        )
-
-                        DetailRow(
-                            label = "Unité de mesure",
-                            value = "${detail?.uom.orEmpty()}"
-                        )
-
-                        DetailRow(
-                            label = "Classification",
-                            value = "${detail?.classDesc.orEmpty()}"
-                        )
-
-                        DetailRow(
-                            label = "No. modèle",
-                            value = "${detail?.modelNum.orEmpty()}"
                         )
 
                         DetailRow(
