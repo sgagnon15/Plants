@@ -8,12 +8,24 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class ItemUpsertDto(
-    @SerialName("itemnumber") val itemNumber: Int,
-    @SerialName("botanicalvar") val botanicalVar: String,
-    @SerialName("uom") val uom: String,
-    @SerialName("vendor") val vendor: String,
-    @SerialName("barcode") val barcode: String? = null,
-    @SerialName("vendorurl") val vendorUrl: String? = null
+    @SerialName("itemnumber")   val itemNumber: Int,
+    @SerialName("botanicalVar") val botanicalVar: String,
+    @SerialName("commonName")   val commonName: String? = null,
+    @SerialName("cultivar")     val cultivar: String? = null,
+    @SerialName("origin")       val origin: String? = null,
+    @SerialName("wiki")         val wiki: String? = null,
+    @SerialName("pictureRotation") val pictureRotation: Int,
+
+    //  Care instructions
+    @SerialName("light")        val light: String? = null,
+    @SerialName("soil")         val soil: String? = null,
+    @SerialName("water")        val water: String? = null,
+    @SerialName("feed")         val feed: String? = null,
+    @SerialName("dormancy")     val dormancy: String? = null,
+    @SerialName("transplant")   val transplant: String? = null,
+    @SerialName("otherCare")    val otherCare: String? = null,
+    @SerialName("humidity")     val humidity: String? = null,
+    @SerialName("temperature")  val temperature: String? = null
 )
 
 @Serializable
@@ -30,12 +42,9 @@ data class ItemDetailDto(
     @SerialName("quantity")     val quantity: Int = 0,
     @SerialName("cultivar")     val cultivar: String,
     @SerialName("origin")       val origin: String,
-    @SerialName("barcode")      val barcode: String? = null,
-    @SerialName("manufacturer") val manufacturer: String? = null,
     @SerialName("vendor")       val vendor: String? = null,
     @SerialName("creationDate") val creationDate: String? = null,
     @SerialName("vendorUrl")    val vendorUrl: String? = null,
-    @SerialName("avgcost")      val avgCost: String? = null,
     @SerialName("url")          val url: String? = null,
     @SerialName("wiki")         val wiki: String? = null,
     @SerialName("thumbnailurl") val thumbnailurl: String? = null,

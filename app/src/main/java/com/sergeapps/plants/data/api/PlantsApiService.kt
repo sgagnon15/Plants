@@ -3,6 +3,7 @@ package com.sergeapps.plants.data.api
 import com.sergeapps.plants.data.item.DeletePictureResponseDto
 import com.sergeapps.plants.data.item.ManufDto
 import com.sergeapps.plants.data.item.UploadPicResponseDto
+import com.sergeapps.plants.vm.item.UpdateItemDetailDto
 import retrofit2.http.GET
 import retrofit2.http.Query
 import okhttp3.MultipartBody
@@ -11,7 +12,7 @@ import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.Part
 import retrofit2.http.DELETE
-
+import retrofit2.Response
 
 interface PlantsApiService {
     //  -----------------------------------------------------------------
@@ -35,6 +36,12 @@ interface PlantsApiService {
     suspend fun getPlantCare(
         @Query("plantname") plantName: String
     ): PlantCareDto
+
+    @POST("item")
+    suspend fun updateItemDetail(
+        @Query("id") itemId: Int,
+        @Body item: UpdateItemDetailDto
+    ): Response<Unit>
 
     //  -----------------------------------------------------------------
     // Vendors & Manufacturers

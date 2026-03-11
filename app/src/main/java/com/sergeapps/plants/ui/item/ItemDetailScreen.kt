@@ -137,6 +137,7 @@ fun ItemDetailScreen(
     val coroutineScope = rememberCoroutineScope()
     val loadingCareAi by viewModel.loadingCareAi.collectAsState()
     var careExpanded by remember { mutableStateOf(false) }
+    val state by viewModel.state.collectAsState()
 
     val pickImageLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent(),
@@ -182,8 +183,6 @@ fun ItemDetailScreen(
         )
     }
 
-    val state by viewModel.state.collectAsState()
-
     Scaffold(
         topBar = {
             androidx.compose.material3.TopAppBar(
@@ -198,21 +197,22 @@ fun ItemDetailScreen(
                         onClick = {
                             coroutineScope.launch {
                                 try {
-                                    val newId = viewModel.save()
-                                    if (state.isNewItem) {
-                                        // option 1: ouvrir le détail du nouvel article
-                                        // (si ton nav supporte onOpenItem)
-                                        // sinon: onBack()
-                                    }
+                                    viewModel.save()
                                     onBack()
-                                } catch (e: Exception) {
-                                    // on réutilise error dans le state
-                                    // (simple et efficace)
+                                } catch (_: Exception) {
                                 }
                             }
-                        }
+                        },
+                        enabled = !state.isSaving
                     ) {
-                        Icon(Icons.Filled.Check, contentDescription = "Enregistrer")
+                        if (state.isSaving) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Icon(Icons.Filled.Check, contentDescription = "Enregistrer")
+                        }
                     }
                 }
             )
@@ -252,7 +252,6 @@ fun ItemDetailScreen(
                     vendor = state.vendorText.ifBlank { null },
                     creationDate = state.creationDateText.ifBlank { "" },
                     vendorUrl = null,
-                    avgCost = null,
                     url = state.imageUrl,
                     thumbnailurl = state.thumbnailUrl,
                     quantity = state.quantity.toInt(),
@@ -314,27 +313,29 @@ fun ItemDetailScreen(
                             verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             // ✍️ Description (éditable)
-                            BasicTextField(
-                                value = "${state.itemNumberText} - ${state.botanicalvarText}",
-                                onValueChange = viewModel::onDescriptionChanged,
-                                singleLine = false,
-                                textStyle = MaterialTheme.typography.titleMedium.copy(
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    fontWeight = FontWeight.SemiBold
-                                ),
-                                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                                modifier = Modifier.fillMaxWidth(),
-                                decorationBox = { inner ->
-                                    if (state.botanicalvarText.isBlank()) {
-                                        Text(
-                                            text = "Variété",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                DetailRowEditable(
+                                    label = "No article",
+                                    value = state.itemNumberText,
+                                    onValueChange = viewModel::onItemNumberChanged
+                                )
+
+                                OutlinedTextField(
+                                    value = state.botanicalvarText,
+                                    onValueChange = viewModel::onDescriptionChanged,
+                                    singleLine = false,
+                                    textStyle = MaterialTheme.typography.titleMedium.copy(
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        fontWeight = FontWeight.SemiBold
+                                    ),
+                                    modifier = Modifier.fillMaxWidth(),
+                                    placeholder = {
+                                        Text("Variété")
                                     }
-                                    inner()
-                                }
-                            )
+                                )
+                            }
                         }
                     }
                     Spacer(modifier = Modifier.height(14.dp))
@@ -399,16 +400,21 @@ fun ItemDetailScreen(
                                     temperature = state.temperature,
                                     dormancy = state.dormancy,
                                     feed = state.feed,
-                                    botanicalVar = state.botanicalvarText,
                                     expanded = careExpanded,
+                                    loadingCareAi = loadingCareAi,
                                     onExpandedChange = { careExpanded = it },
                                     onAiFill = {
                                         viewModel.fillCareInstructionsWithAI(
                                             state.itemDetail?.botanicalVar ?: state.botanicalvarText
                                         )
-                                    }
-                                )
-                            }
+                                    },
+                                    onLightChange = viewModel::onLightChanged,
+                                    onSoilChange = viewModel::onSoilChanged,
+                                    onWaterChange = viewModel::onWaterChanged,
+                                    onTemperatureChange = viewModel::onTemperatureChanged,
+                                    onDormancyChange = viewModel::onDormancyChanged,
+                                    onFeedChange = viewModel::onFeedChanged
+                                )                            }
                         }
 
                         item {
@@ -1046,10 +1052,16 @@ private fun CareInstructionsCard(
     temperature: String?,
     dormancy: String?,
     feed: String?,
-    botanicalVar: String,
     expanded: Boolean,
+    loadingCareAi: Boolean,
     onExpandedChange: (Boolean) -> Unit,
-    onAiFill: () -> Unit
+    onAiFill: () -> Unit,
+    onLightChange: (String) -> Unit,
+    onSoilChange: (String) -> Unit,
+    onWaterChange: (String) -> Unit,
+    onTemperatureChange: (String) -> Unit,
+    onDormancyChange: (String) -> Unit,
+    onFeedChange: (String) -> Unit
 ) {
 
     Card(
@@ -1077,26 +1089,28 @@ private fun CareInstructionsCard(
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-/*
-                    IconButton(onClick = { onAiFill() }) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_chatgpt),
-                            contentDescription = "Remplir avec ChatGPT",
-                            tint = Color.Unspecified,
-                            modifier = Modifier.size(40.dp)
-                        )
-                    }*/
                     IconButton(
-                        onClick = {
-                            onAiFill()
-                        }
+                        onClick = { onAiFill() },
+                        enabled = !loadingCareAi
                     ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_chatgpt),
-                            contentDescription = "Remplir avec ChatGPT",
-                            tint = Color.Unspecified,
-                            modifier = Modifier.size(40.dp)
-                        )
+
+                        if (loadingCareAi) {
+
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                strokeWidth = 2.dp
+                            )
+
+                        } else {
+
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_chatgpt),
+                                contentDescription = "Remplir avec ChatGPT",
+                                tint = Color.Unspecified,
+                                modifier = Modifier.size(40.dp)
+                            )
+
+                        }
                     }
                 }
 
@@ -1114,47 +1128,40 @@ private fun CareInstructionsCard(
                 Column(
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    var lightValue by remember(light) { mutableStateOf(light ?: "") }
-                    var soilValue by remember(soil) { mutableStateOf(soil ?: "") }
-                    var waterValue by remember(water) { mutableStateOf(water ?: "") }
-                    var temperatureValue by remember(temperature) { mutableStateOf(temperature ?: "") }
-                    var dormancyValue by remember(dormancy) { mutableStateOf(dormancy ?: "") }
-                    var feedValue by remember(feed) { mutableStateOf(feed ?: "") }
-
                     CareInstructionRow(
                         label = "Lumière",
-                        value = lightValue,
-                        onValueChange = { lightValue = it }
+                        value = light ?: "",
+                        onValueChange = onLightChange
                     )
 
                     CareInstructionRow(
                         label = "Sol",
-                        value = soilValue,
-                        onValueChange = { soilValue = it }
+                        value = soil ?: "",
+                        onValueChange = onSoilChange
                     )
 
                     CareInstructionRow(
                         label = "Arrosage",
-                        value = waterValue,
-                        onValueChange = { waterValue = it }
+                        value = water ?: "",
+                        onValueChange = onWaterChange
                     )
 
                     CareInstructionRow(
                         label = "Température",
-                        value = temperatureValue,
-                        onValueChange = { temperatureValue = it }
+                        value = temperature ?: "",
+                        onValueChange = onTemperatureChange
                     )
 
                     CareInstructionRow(
                         label = "Dormance",
-                        value = dormancyValue,
-                        onValueChange = { dormancyValue = it }
+                        value = dormancy ?: "",
+                        onValueChange = onDormancyChange
                     )
 
                     CareInstructionRow(
                         label = "Fertilisation",
-                        value = feedValue,
-                        onValueChange = { feedValue = it }
+                        value = feed ?: "",
+                        onValueChange = onFeedChange
                     )
                 }
             }

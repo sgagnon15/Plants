@@ -18,6 +18,7 @@ import com.sergeapps.plants.data.item.UploadPicResponseDto
 import com.sergeapps.plants.ui.item.InventoryRowUi
 import com.sergeapps.plants.util.MultipartUtils
 import com.sergeapps.plants.data.api.PlantCareDto
+import com.sergeapps.plants.vm.item.UpdateItemDetailDto
 
 
 class PlantsRepository(
@@ -28,20 +29,33 @@ class PlantsRepository(
     suspend fun createItem(
         itemNumber: Int,
         botanicalvar: String,
-        uom: String,
-        vendor: String,
-        barcode: String? = null,
-        vendorUrl: String? = null
+        commonName: String? = null,
+        cultivar: String? = null,
+        origin: String? = null,
+        wiki: String? = null,
+        light: String? = null,
+        soil: String? = null,
+        water: String? = null,
+        temperature: String? = null,
+        dormancy: String? = null,
+        feed: String? = null
     ): Int {
         api.upsertItem(
             itemId = 0,
             body = ItemUpsertDto(
                 itemNumber = itemNumber,
                 botanicalVar = botanicalvar,
-                uom = uom,
-                vendor = vendor,
-                barcode = barcode,
-                vendorUrl = vendorUrl
+                commonName = commonName,
+                cultivar = cultivar,
+                origin = origin,
+                wiki = wiki,
+                light = light,
+                soil = soil,
+                water = water,
+                temperature = temperature,
+                dormancy = dormancy,
+                feed = feed,
+                pictureRotation = 0
             )
         )
         return itemNumber
@@ -51,20 +65,33 @@ class PlantsRepository(
         itemId: Int,
         itemNumber: Int,
         botanicalvar: String,
-        uom: String,
-        vendor: String,
-        barcode: String? = null,
-        vendorUrl: String? = null
+        commonName: String? = null,
+        cultivar: String? = null,
+        origin: String? = null,
+        wiki: String? = null,
+        light: String? = null,
+        soil: String? = null,
+        water: String? = null,
+        temperature: String? = null,
+        dormancy: String? = null,
+        feed: String? = null
     ) {
         api.upsertItem(
             itemId = itemId,
             body = ItemUpsertDto(
                 itemNumber = itemNumber,
                 botanicalVar = botanicalvar,
-                uom = uom,
-                vendor = vendor,
-                barcode = barcode,
-                vendorUrl = vendorUrl
+                commonName = commonName,
+                cultivar = cultivar,
+                origin = origin,
+                wiki = wiki,
+                light = light,
+                soil = soil,
+                water = water,
+                temperature = temperature,
+                dormancy = dormancy,
+                feed = feed,
+                pictureRotation = 0
             )
         )
     }
@@ -228,20 +255,26 @@ class PlantsRepository(
     }
 
     suspend fun getPlantCare(plantName: String): PlantCareDto {
-        android.util.Log.d("PlantsDebug", "Repository.getPlantCare START plantName=$plantName")
-
         try {
-            android.util.Log.d("PlantsDebug", "Repository.getPlantCare before api call")
-
             val result = api.getPlantCare(plantName)
-
-            android.util.Log.d("PlantsDebug", "Repository.getPlantCare after api call result=$result")
-
             return result
 
         } catch (e: Exception) {
-            android.util.Log.e("PlantsDebug", "Repository.getPlantCare ERROR", e)
             throw e
         }
-    }}
+    }
+
+    suspend fun updateItemDetail(item: UpdateItemDetailDto): Result<Unit> {
+        return try {
+            val response = api.updateItemDetail(item.id, item)
+            if (response.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("Erreur HTTP ${response.code()}"))
+            }
+        } catch (exception: Exception) {
+            Result.failure(exception)
+        }
+    }
+}
 

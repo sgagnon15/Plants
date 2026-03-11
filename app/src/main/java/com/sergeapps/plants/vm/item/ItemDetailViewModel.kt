@@ -19,7 +19,6 @@ import kotlinx.coroutines.flow.update
 
 import androidx.core.content.FileProvider
 import com.sergeapps.plants.ui.item.InventoryRowUi
-import kotlinx.serialization.SerialName
 import java.io.File
 
 
@@ -27,12 +26,31 @@ private var pendingCameraPhotoUri: Uri? = null
 
 data class VendorUi(val name: String)
 
+data class UpdateItemDetailDto(
+    val id: Int,
+    val botanicalVar: String,
+    val cultivar: String,
+    val commonName: String,
+    val wiki: String,
+    val origin: String,
+    val light: String,
+    val soil: String,
+    val water: String,
+    val temperatureMin: Int?,
+    val temperatureMax: Int?,
+    val dormancy: String,
+    val feed: String
+)
+
 data class ItemDetailUiState(
     val isLoading: Boolean = true,
+    val isSaving: Boolean = false,
+    val saveSuccess: Boolean = false,
+    val saveError: String? = null,
     val error: String? = null,
     val isNewItem: Boolean = false,
     val itemDetail: ItemDetailDto? = null,
-    val itemId: Int? = null,
+    val itemId: Int = 0,
 
     // Champs éditables (création / édition)
     val itemNumberText: String = "",
@@ -108,7 +126,7 @@ class ItemDetailViewModel(app: Application) : AndroidViewModel(app) {
                 uiState.value = ItemDetailUiState(
                     isLoading = false,
                     isNewItem = true,
-                    itemId = null,
+                    itemId = 0,
                     apiKey = settings.apiKey,
                     itemNumberText = if (nextItemNumber > 0) nextItemNumber.toString() else "",
                     botanicalvarText = "",
@@ -341,45 +359,88 @@ class ItemDetailViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     suspend fun save(): Int {
-        val currentState = uiState.value
-
-        val itemNumber = currentState.itemNumberText.trim().toIntOrNull()
-            ?: throw IllegalArgumentException("No. article invalide")
-
-        val botanicalvar = currentState.botanicalvarText.trim()
-        if (botanicalvar.isBlank()) {
-            throw IllegalArgumentException("Description requise")
+        uiState.update {
+            it.copy(
+                isSaving = true,
+                saveSuccess = false,
+                saveError = null,
+                error = null
+            )
         }
 
-        val vendor = currentState.vendorText.trim()
-        val uom = currentState.uomText.trim()
-        val barcode = currentState.barcodeText.trim().ifBlank { null }
-        val vendorUrl = currentState.vendorUrlText.trim().ifBlank { null }
+        return try {
+            val currentState = uiState.value
 
-        val createdOrUpdatedId = if (currentState.isNewItem) {
-            repository.createItem(
-                itemNumber = itemNumber,
-                botanicalvar = botanicalvar,
-                uom = uom,
-                vendor = vendor,
-                barcode = barcode,
-                vendorUrl = vendorUrl
-            )
-        } else {
-            val existingId = currentState.itemId ?: throw IllegalStateException("itemId manquant")
-            repository.updateItem(
-                itemId = existingId,
-                itemNumber = itemNumber,
-                botanicalvar = botanicalvar,
-                uom = uom,
-                vendor = vendor,
-                barcode = barcode,
-                vendorUrl = vendorUrl
-            )
-            existingId
+            val itemNumber = currentState.itemNumberText.trim().toIntOrNull()
+                ?: throw IllegalArgumentException("No. article invalide")
+
+            val botanicalvar = currentState.botanicalvarText.trim()
+            if (botanicalvar.isBlank()) {
+                throw IllegalArgumentException("Description requise")
+            }
+
+            val vendor = currentState.vendorText.trim()
+            val uom = currentState.uomText.trim()
+            val barcode = currentState.barcodeText.trim().ifBlank { null }
+            val vendorUrl = currentState.vendorUrlText.trim().ifBlank { null }
+
+            val createdOrUpdatedId = if (currentState.isNewItem) {
+                repository.createItem(
+                    itemNumber = itemNumber,
+                    botanicalvar = botanicalvar,
+                    commonName = currentState.commonnameText.trim(),
+                    cultivar = currentState.cultivarText.trim(),
+                    origin = currentState.originText.trim(),
+                    wiki = currentState.wikiText?.trim().orEmpty(),
+                    light = currentState.light?.trim().orEmpty(),
+                    soil = currentState.soil?.trim().orEmpty(),
+                    water = currentState.water?.trim().orEmpty(),
+                    temperature = currentState.temperature?.trim().orEmpty(),
+                    dormancy = currentState.dormancy?.trim().orEmpty(),
+                    feed = currentState.feed?.trim().orEmpty()
+                )
+            } else {
+                val existingId = currentState.itemId ?: throw IllegalStateException("itemId manquant")
+
+                repository.updateItem(
+                    itemId = existingId,
+                    itemNumber = itemNumber,
+                    botanicalvar = botanicalvar,
+                    commonName = currentState.commonnameText.trim(),
+                    cultivar = currentState.cultivarText.trim(),
+                    origin = currentState.originText.trim(),
+                    wiki = currentState.wikiText?.trim().orEmpty(),
+                    light = currentState.light?.trim().orEmpty(),
+                    soil = currentState.soil?.trim().orEmpty(),
+                    water = currentState.water?.trim().orEmpty(),
+                    temperature = currentState.temperature?.trim().orEmpty(),
+                    dormancy = currentState.dormancy?.trim().orEmpty(),
+                    feed = currentState.feed?.trim().orEmpty()
+                )
+
+                existingId
+            }
+
+            uiState.update {
+                it.copy(
+                    isSaving = false,
+                    saveSuccess = true,
+                    saveError = null
+                )
+            }
+
+            createdOrUpdatedId
+        } catch (e: Exception) {
+            uiState.update {
+                it.copy(
+                    isSaving = false,
+                    saveSuccess = false,
+                    saveError = e.message,
+                    error = e.message
+                )
+            }
+            throw e
         }
-
-        return createdOrUpdatedId
     }
 
     fun onBarcodeChanged(value: String) {
@@ -415,16 +476,11 @@ class ItemDetailViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun fillCareInstructionsWithAI(plantName: String) {
-        android.util.Log.d("PlantsDebug", "fillCareInstructionsWithAI called with plantName=$plantName")
-
         viewModelScope.launch {
             try {
                 _loadingCareAi.value = true
 
-                android.util.Log.d("PlantsDebug", "Before repository.getPlantCare")
                 val care = repository.getPlantCare(plantName)
-                android.util.Log.d("PlantsDebug", "After repository.getPlantCare: $care")
-
                 val current = uiState.value
 
                 uiState.value = current.copy(
@@ -443,5 +499,102 @@ class ItemDetailViewModel(app: Application) : AndroidViewModel(app) {
                 _loadingCareAi.value = false
             }
         }
+    }
+
+    fun saveChanges(
+        botanicalVar: String,
+        cultivar: String,
+        commonName: String,
+        wiki: String,
+        origin: String,
+        light: String,
+        soil: String,
+        water: String,
+        temperatureMin: String,
+        temperatureMax: String,
+        dormancy: String,
+        feed: String
+    ) {
+        viewModelScope.launch {
+            uiState.update {
+                it.copy(
+                    isSaving = true,
+                    saveSuccess = false,
+                    saveError = null
+                )
+            }
+
+            val payload = UpdateItemDetailDto(
+                id = uiState.value.itemId,
+                botanicalVar = botanicalVar.trim(),
+                cultivar = cultivar.trim(),
+                commonName = commonName.trim(),
+                wiki = wiki.trim(),
+                origin = origin.trim(),
+                light = light.trim(),
+                soil = soil.trim(),
+                water = water.trim(),
+                temperatureMin = temperatureMin.toIntOrNull(),
+                temperatureMax = temperatureMax.toIntOrNull(),
+                dormancy = dormancy.trim(),
+                feed = feed.trim()
+            )
+
+            val result = repository.updateItemDetail(payload)
+
+            result
+                .onSuccess {
+                    uiState.update {
+                        it.copy(
+                            botanicalvarText = payload.botanicalVar,
+                            cultivarText = payload.cultivar,
+                            commonnameText = payload.commonName,
+                            wikiText = payload.wiki,
+                            originText = payload.origin,
+                            light = payload.light,
+                            soil = payload.soil,
+                            water = payload.water,
+                            dormancy = payload.dormancy,
+                            feed = payload.feed,
+                            isSaving = false,
+                            saveSuccess = true,
+                            saveError = null
+                        )
+                    }
+                }
+                .onFailure { exception ->
+                    uiState.update {
+                        it.copy(
+                            isSaving = false,
+                            saveSuccess = false,
+                            saveError = exception.message ?: "Erreur inconnue"
+                        )
+                    }
+                }
+        }
+    }
+
+    fun onLightChanged(value: String) {
+        uiState.update { it.copy(light = value) }
+    }
+
+    fun onSoilChanged(value: String) {
+        uiState.update { it.copy(soil = value) }
+    }
+
+    fun onWaterChanged(value: String) {
+        uiState.update { it.copy(water = value) }
+    }
+
+    fun onTemperatureChanged(value: String) {
+        uiState.update { it.copy(temperature = value) }
+    }
+
+    fun onDormancyChanged(value: String) {
+        uiState.update { it.copy(dormancy = value) }
+    }
+
+    fun onFeedChanged(value: String) {
+        uiState.update { it.copy(feed = value) }
     }
 }
