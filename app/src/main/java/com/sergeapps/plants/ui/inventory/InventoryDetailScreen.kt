@@ -60,10 +60,14 @@ import com.sergeapps.plants.ui.item.DetailRow
 import androidx.compose.material3.TextField
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import android.app.DatePickerDialog
+import androidx.compose.foundation.layout.size
 import java.util.Calendar
 import java.text.SimpleDateFormat
 import java.util.Locale
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -278,9 +282,9 @@ fun InventoryDetailScreen(
                             }
 
                             OutlinedTextField(
-                                value = state.editBinNum,
-                                onValueChange = { viewModel.updateBinNum(it) },
-                                label = { Text("Casier") },
+                                value = state.editposition,
+                                onValueChange = { viewModel.updateposition(it) },
+                                label = { Text("Position") },
                                 modifier = Modifier.weight(1f),
                                 readOnly = !isEditing
                             )
@@ -435,6 +439,9 @@ fun PropertyRow(
             singleLine = true,
             textStyle = MaterialTheme.typography.bodySmall.copy(
                 color = MaterialTheme.colorScheme.onSurface
+            ),
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Decimal
             )
         )
     }
@@ -452,10 +459,11 @@ fun DatePickerRow(
 
     Row(
         modifier = Modifier
-            .fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
+            .fillMaxWidth()
+            .padding(vertical = 1.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
+
         Text(
             text = label,
             modifier = Modifier.width(130.dp),
@@ -463,60 +471,69 @@ fun DatePickerRow(
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
-        BasicTextField(
-            value = value,
-            onValueChange = {},
+        Row(
             modifier = Modifier
                 .weight(1f)
-                .height(10.dp),
-            singleLine = true,
-            enabled = false,
-            textStyle = MaterialTheme.typography.bodySmall.copy(
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        )
-
-        IconButton(
-            onClick = {
-                if (!enabled) return@IconButton
-                val calendar = Calendar.getInstance()
-
-                if (value.isNotBlank()) {
-                    try {
-                        val parsedDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(value)
-                        if (parsedDate != null) {
-                            calendar.time = parsedDate
-                        }
-                    } catch (_: Exception) {
-                    }
-                }
-
-                DatePickerDialog(
-                    context,
-                    { _, year, month, dayOfMonth ->
-                        val pickedDate = String.format(
-                            Locale.getDefault(),
-                            "%04d-%02d-%02d",
-                            year,
-                            month + 1,
-                            dayOfMonth
-                        )
-                        onChange(pickedDate)
-                    },
-                    calendar.get(Calendar.YEAR),
-                    calendar.get(Calendar.MONTH),
-                    calendar.get(Calendar.DAY_OF_MONTH)
-                ).show()
-            }
+                .height(26.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
+
+            BasicTextField(
+                value = value,
+                onValueChange = {},
+                modifier = Modifier.weight(1f),
+                singleLine = true,
+                enabled = false,
+                textStyle = MaterialTheme.typography.bodySmall.copy(
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            )
+
             Icon(
                 imageVector = Icons.Filled.DateRange,
                 contentDescription = "Choisir une date",
-                tint = if (enabled) {
+                modifier = Modifier
+                    .size(16.dp)
+                    .clickable {
+
+                        if (!enabled) return@clickable
+
+                        val calendar = Calendar.getInstance()
+
+                        if (value.isNotBlank()) {
+                            try {
+                                val parsed = SimpleDateFormat(
+                                    "yyyy-MM-dd",
+                                    Locale.getDefault()
+                                ).parse(value)
+
+                                if (parsed != null) {
+                                    calendar.time = parsed
+                                }
+                            } catch (_: Exception) {}
+                        }
+
+                        DatePickerDialog(
+                            context,
+                            { _, year, month, day ->
+                                val pickedDate = String.format(
+                                    Locale.getDefault(),
+                                    "%04d-%02d-%02d",
+                                    year,
+                                    month + 1,
+                                    day
+                                )
+                                onChange(pickedDate)
+                            },
+                            calendar.get(Calendar.YEAR),
+                            calendar.get(Calendar.MONTH),
+                            calendar.get(Calendar.DAY_OF_MONTH)
+                        ).show()
+                    },
+                tint = if (enabled)
                     MaterialTheme.colorScheme.onSurfaceVariant
-                } else {
+                else
                     MaterialTheme.colorScheme.outline
-                }
             )
         }
     }

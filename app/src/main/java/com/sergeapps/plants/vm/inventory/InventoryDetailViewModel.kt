@@ -1,6 +1,7 @@
 package com.sergeapps.plants.vm.inventory
 
 import android.app.Application
+import java.util.Locale
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.sergeapps.plants.data.api.PlantsApiFactory
@@ -23,7 +24,7 @@ data class InventoryDetailUiState(
     val error: String? = null,
     val detail: StockDetailDto? = null,
     val editLocation: String = "",
-    val editBinNum: String = "",
+    val editposition: String = "",
     val locations: List<LocationDto> = emptyList(),
     val isLoadingLocations: Boolean = false,
     val initialItemNumber: String = "",
@@ -36,31 +37,6 @@ data class InventoryDetailUiState(
     val lastFeedingText: String = "",
     val purchasePriceText: String = ""
 )
-/*
-data class InventoryDetailUiState(
-    val isLoading: Boolean = true,
-    val isSaving: Boolean = false,
-    val error: String? = null,
-    val detail: StockDetailDto? = null,
-    val editLocation: String = "",
-    val editBinNum: String = "",
-    val locations: List<LocationDto> = emptyList(),
-    val isLoadingLocations: Boolean = false,
-    val initialItemNumber: String = "",
-    val stockTrans: StockTransUiState = StockTransUiState(),
-
-    val vendorText: String = "",
-    val purchaseDateText: String = "",
-    val lastTransplantText: String = "",
-    val lastDivisionText: String = "",
-    val lastFeedingText: String = "",
-    val purchasePriceText: String = "",
-
-    val editPurchaseDate: String = "",
-    val editLastTransplant: String = "",
-    val editLastDivision: String = "",
-    val editLastFeeding: String = ""
-)*/
 
 data class StockTransUiState(
     val isDialogOpen: Boolean = false,
@@ -104,15 +80,15 @@ class InventoryDetailViewModel(app: Application) : AndroidViewModel(app) {
                         detail = detail,
                         initialItemNumber = detail.itemNumber,
                         editLocation = detail.location.orEmpty(),
-                        editBinNum = detail.binNum.orEmpty(),
+                        editposition = detail.position.orEmpty(),
 
                         vendorText = detail.vendor.orEmpty(),
                         purchaseDateText = detail.purchaseDate.orEmpty(),
                         lastTransplantText = detail.lastTransplant.orEmpty(),
                         lastDivisionText = detail.lastDivision.orEmpty(),
                         lastFeedingText = detail.lastFeeding.orEmpty(),
-                        purchasePriceText = detail.purchasePrice?.toString().orEmpty(),
-
+                        purchasePriceText =
+                            detail.purchasePrice?.let { "%.2f $".format(Locale.getDefault(), it) } ?: "",
                         error = null
                     )
                 }
@@ -134,28 +110,28 @@ class InventoryDetailViewModel(app: Application) : AndroidViewModel(app) {
         val detail = uiState.value.detail ?: return
         uiState.value = uiState.value.copy(
             editLocation = detail.location,
-            editBinNum = detail.binNum,
+            editposition = detail.position,
             error = null
         )
     }
 
-    fun updateBinNum(value: String) {
-        uiState.value = uiState.value.copy(editBinNum = value)
+    fun updateposition(value: String) {
+        uiState.value = uiState.value.copy(editposition = value)
     }
 
     fun saveChanges() {
         val current = uiState.value
 
         val newLocation = current.editLocation.trim()
-        val newBinNum = current.editBinNum.trim()
+        val newposition = current.editposition.trim()
 
         if (newLocation.isBlank()) {
             uiState.value = current.copy(error = "Emplacement invalide")
             return
         }
 
-        if (newBinNum.isBlank()) {
-            uiState.value = current.copy(error = "Binnum invalide")
+        if (newposition.isBlank()) {
+            uiState.value = current.copy(error = "position invalide")
             return
         }
 
@@ -180,7 +156,7 @@ class InventoryDetailViewModel(app: Application) : AndroidViewModel(app) {
                 val body = StockUpsertRequest(
                     itemNumber = itemNumberToSave,
                     location = newLocation,
-                    binNum = newBinNum,
+                    position = newposition,
                     purchaseDate = current.purchaseDateText,
                     lastTransplant = current.lastTransplantText,
                     lastDivision = current.lastDivisionText,
@@ -197,7 +173,7 @@ class InventoryDetailViewModel(app: Application) : AndroidViewModel(app) {
                     // une fois créé, tu peux remettre initialItemNumber à 0 ou garder
                     initialItemNumber = refreshed.itemNumber,
                     editLocation = refreshed.location.orEmpty(),
-                    editBinNum = refreshed.binNum.orEmpty(),
+                    editposition = refreshed.position.orEmpty(),
                     error = null
                 )
             } catch (e: Exception) {
@@ -283,5 +259,21 @@ class InventoryDetailViewModel(app: Application) : AndroidViewModel(app) {
 
     fun onLastFeedingChanged(value: String) {
         uiState.update { it.copy(lastFeedingText = value) }
+    }
+
+    fun onPurchasePriceChanged(value: String) {
+
+        val number = value
+            .replace("$", "")
+            .replace(",", ".")
+            .toDoubleOrNull()
+
+        val formatted = number?.let {
+            String.format(Locale.getDefault(), "%.2f $", it)
+        } ?: ""
+
+        uiState.update {
+            it.copy(purchasePriceText = formatted)
+        }
     }
 }

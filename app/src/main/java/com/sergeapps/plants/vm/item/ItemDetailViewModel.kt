@@ -334,7 +334,7 @@ class ItemDetailViewModel(app: Application) : AndroidViewModel(app) {
                     it.copy(
                         inventoryByLocation = list.sortedWith(
                             compareBy<InventoryRowUi> { it.location }
-                                .thenBy { it.binNum ?: "" }
+                                .thenBy { it.position ?: "" }
                         ),
                         isInventoryByLocationLoading = false
                     )

@@ -103,7 +103,7 @@ interface PlantsApiService {
     @GET("stocklist")
     suspend fun getStockList(
         @Query("nbitems") nbItems: Int = 15,
-        @Query("orderby") orderBy: String = "binnum",
+        @Query("orderby") orderBy: String = "position",
         @Query("pagenumber") pageNumber: Int = 1,
         @Query("location") location: String
     ): List<StockListRowDto>

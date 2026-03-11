@@ -226,7 +226,7 @@ fun InventoryScreen(
 
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "${row.binNum}",
+                                    text = "${row.position}",
                                     style = MaterialTheme.typography.titleMedium
                                 )
                                 Text(

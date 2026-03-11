@@ -93,7 +93,7 @@ class InventoryViewModel(app: Application) : AndroidViewModel(app) {
                     location = selected.location,
                     page = 1,
                     nbItems = itemsPerPage,
-                    orderBy = "binnum"
+                    orderBy = "position"
                 )
 
                 uiState.value = uiState.value.copy(
@@ -130,7 +130,7 @@ class InventoryViewModel(app: Application) : AndroidViewModel(app) {
                     location = selected.location,
                     page = nextPage,
                     nbItems = itemsPerPage,
-                    orderBy = "binnum"
+                    orderBy = "position"
                 )
 
                 uiState.value = uiState.value.copy(

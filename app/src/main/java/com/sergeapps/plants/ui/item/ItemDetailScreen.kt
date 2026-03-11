@@ -119,7 +119,7 @@ import com.sergeapps.plants.R
 data class InventoryRowUi(
     val stockId: Int,
     val location: String,
-    val binNum: String?,
+    val position: String?,
     val quantity: Double
 )
 
@@ -1270,9 +1270,9 @@ private fun TotalInventoryCardDropdown(
                     rows.forEach { row ->
                         val left = buildString {
                             append(row.location)
-                            if (!row.binNum.isNullOrBlank()) {
+                            if (!row.position.isNullOrBlank()) {
                                 append(" / Casier ")
-                                append(row.binNum)
+                                append(row.position)
                             }
                         }
 

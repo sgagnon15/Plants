@@ -103,7 +103,7 @@ data class StockListRowDto(
     @SerialName("specimennumber")   val specimenNumber: Int? = null,
     @SerialName("picturerotation")  val picturerotation: Int,
     @SerialName("location")         val location: String,
-    @SerialName("position")         val binNum: String,
+    @SerialName("position")         val position: String,
     @SerialName("id")               val stockId: Int,
     @SerialName("commonName")       val commonName: String,
     @SerialName("botanicalvar")     val botanicalvar: String,
@@ -118,7 +118,7 @@ data class StockDetailDto(
     @SerialName("itemnumber")       val itemNumber: String,
     @SerialName("creationDate")     val creationDate: String,
     @SerialName("location")         val location: String,
-    @SerialName("position")         val binNum: String,
+    @SerialName("position")         val position: String,
     @SerialName("purchaseDate")     val purchaseDate: String?,
     @SerialName("lastTransplant")   val lastTransplant: String?,
     @SerialName("lastDivision")     val lastDivision: String?,
@@ -136,7 +136,7 @@ data class StockDetailDto(
 data class StockUpsertRequest(
     @SerialName("itemnumber")     val itemNumber: String,
     @SerialName("location")       val location: String,
-    @SerialName("binnum")         val binNum: String,
+    @SerialName("position")         val position: String,
     @SerialName("purchaseDate")   val purchaseDate: String,
     @SerialName("lastTransplant") val lastTransplant: String,
     @SerialName("lastDivision")   val lastDivision: String,
@@ -150,7 +150,7 @@ data class StockTransDto(
     @SerialName("transtype") val transType: String, // "ISSUE" ou "RETURN"
     @SerialName("itemnumber") val itemNumber: String,
     @SerialName("location") val location: String,
-    @SerialName("binnum") val binNum: String,
+    @SerialName("position") val position: String,
     @SerialName("transqty") val transQty: Int,
     @SerialName("uomcode") val uomCode: String
 )
@@ -159,7 +159,7 @@ data class StockTransDto(
 data class StockListDto(
     @SerialName("id") val id: Int,
     @SerialName("location") val location: String? = null,
-    @SerialName("binnum") val binNum: String? = null,
+    @SerialName("position") val position: String? = null,
     @SerialName("quantity") val quantity: String? = null
 )
 

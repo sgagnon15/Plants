@@ -244,7 +244,7 @@ class PlantsRepository(
             InventoryRowUi(
                 stockId = dto.id,
                 location = dto.location?.trim().orEmpty(),
-                binNum = dto.binNum?.trim(),
+                position = dto.position?.trim(),
                 quantity = dto.quantity?.toDouble()?: 0.0
             )
         }
