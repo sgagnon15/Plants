@@ -27,17 +27,6 @@ private var pendingCameraPhotoUri: Uri? = null
 
 data class VendorUi(val name: String)
 
-data class PlantCareDto(
-    val arrosage: String?,
-    val lumière: String?,
-    val température: String?,
-    val engrais: String?,
-    val substrat: String?,
-    val dormance: String?,
-    val rempotage: String?,
-    val humidité: String?
-)
-
 data class ItemDetailUiState(
     val isLoading: Boolean = true,
     val error: String? = null,
@@ -426,13 +415,16 @@ class ItemDetailViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun fillCareInstructionsWithAI(plantName: String) {
+        android.util.Log.d("PlantsDebug", "fillCareInstructionsWithAI called with plantName=$plantName")
 
         viewModelScope.launch {
             try {
-
                 _loadingCareAi.value = true
 
+                android.util.Log.d("PlantsDebug", "Before repository.getPlantCare")
                 val care = repository.getPlantCare(plantName)
+                android.util.Log.d("PlantsDebug", "After repository.getPlantCare: $care")
+
                 val current = uiState.value
 
                 uiState.value = current.copy(
@@ -445,18 +437,11 @@ class ItemDetailViewModel(app: Application) : AndroidViewModel(app) {
                     transplant = care.rempotage ?: current.transplant,
                     humidity = care.humidité ?: current.humidity
                 )
-
             } catch (e: Exception) {
-
                 e.printStackTrace()
-
             } finally {
-
                 _loadingCareAi.value = false
-
             }
-
         }
-
     }
 }

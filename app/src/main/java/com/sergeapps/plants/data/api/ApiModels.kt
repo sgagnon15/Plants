@@ -54,6 +54,18 @@ data class ItemDetailDto(
 )
 
 @Serializable
+data class PlantCareDto(
+    @SerialName("arrosage") val arrosage: String? = null,
+    @SerialName("lumière") val lumière: String? = null,
+    @SerialName("température") val température: String? = null,
+    @SerialName("engrais") val engrais: String? = null,
+    @SerialName("substrat") val substrat: String? = null,
+    @SerialName("dormance") val dormance: String? = null,
+    @SerialName("rempotage") val rempotage: String? = null,
+    @SerialName("humidité") val humidité: String? = null
+)
+
+@Serializable
 data class ItemListDto(
     @SerialName("id")           val id: Int,
     @SerialName("itemnumber")   val itemNumber: Int,

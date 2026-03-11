@@ -113,6 +113,7 @@ import androidx.compose.material.icons.filled.Photo
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.unit.Dp
 import com.sergeapps.plants.R
 
 data class InventoryRowUi(
@@ -135,6 +136,7 @@ fun ItemDetailScreen(
     var showDeletePhotoDialog by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
     val loadingCareAi by viewModel.loadingCareAi.collectAsState()
+    var careExpanded by remember { mutableStateOf(false) }
 
     val pickImageLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent(),
@@ -259,11 +261,12 @@ fun ItemDetailScreen(
 
                 val imageModel: Any? = when {
                     state.localSelectedPhotoUri != null -> state.localSelectedPhotoUri
+                    careExpanded && !state.thumbnailUrl.isNullOrBlank() -> state.thumbnailUrl
                     !state.imageUrl.isNullOrBlank() -> state.imageUrl
+                    !state.thumbnailUrl.isNullOrBlank() -> state.thumbnailUrl
                     else -> null
                 }
 
-                // ✅ En création: pas d'upload photo tant que l'item n'existe pas
                 val canUploadPhoto = !state.isNewItem && (state.itemId ?: 0) > 0
 
                 Column(
@@ -283,6 +286,7 @@ fun ItemDetailScreen(
                         photoVersion = state.photoVersion,
                         isUploading = state.isUploadingPhoto,
                         pictureRotation = state.pictureRotation,
+                        imageHeight = if (careExpanded) 110.dp else 230.dp,
                         onPickPhoto = {
                             if (canUploadPhoto) pickImageLauncher.launch("image/*")
                         },
@@ -396,13 +400,13 @@ fun ItemDetailScreen(
                                     dormancy = state.dormancy,
                                     feed = state.feed,
                                     botanicalVar = state.botanicalvarText,
+                                    expanded = careExpanded,
+                                    onExpandedChange = { careExpanded = it },
                                     onAiFill = {
                                         viewModel.fillCareInstructionsWithAI(
                                             state.itemDetail?.botanicalVar ?: state.botanicalvarText
-                                        )                                    }
-/*                                    onAiFill = {
-                                        viewModel.fillCareInstructionsWithAI(state.botanicalvarText)
-                                    }*/
+                                        )
+                                    }
                                 )
                             }
                         }
@@ -505,6 +509,7 @@ private fun PhotoHeroCard(
     photoVersion: Long,
     pictureRotation: Int,
     isUploading: Boolean,
+    imageHeight: Dp,
     onPickPhoto: () -> Unit,
     onAskDeletePhoto: () -> Unit,
     onCameraPhotoSaved: (Uri) -> Unit,
@@ -549,7 +554,7 @@ private fun PhotoHeroCard(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(230.dp)
+                    .height(imageHeight)
                     .clip(shape)
             ) {
                 if (finalModel != null) {
@@ -1042,16 +1047,17 @@ private fun CareInstructionsCard(
     dormancy: String?,
     feed: String?,
     botanicalVar: String,
+    expanded: Boolean,
+    onExpandedChange: (Boolean) -> Unit,
     onAiFill: () -> Unit
 ) {
-    var expanded by remember { mutableStateOf(false) }
 
     Card(
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { expanded = !expanded }
+            .clickable { onExpandedChange(!expanded) }
     ) {
         Column(
             modifier = Modifier.padding(14.dp),
@@ -1108,12 +1114,12 @@ private fun CareInstructionsCard(
                 Column(
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    var lightValue by remember { mutableStateOf(light ?: "") }
-                    var soilValue by remember { mutableStateOf(soil ?: "") }
-                    var waterValue by remember { mutableStateOf(water ?: "") }
-                    var temperatureValue by remember { mutableStateOf(temperature ?: "") }
-                    var dormancyValue by remember { mutableStateOf(dormancy ?: "") }
-                    var feedValue by remember { mutableStateOf(feed ?: "") }
+                    var lightValue by remember(light) { mutableStateOf(light ?: "") }
+                    var soilValue by remember(soil) { mutableStateOf(soil ?: "") }
+                    var waterValue by remember(water) { mutableStateOf(water ?: "") }
+                    var temperatureValue by remember(temperature) { mutableStateOf(temperature ?: "") }
+                    var dormancyValue by remember(dormancy) { mutableStateOf(dormancy ?: "") }
+                    var feedValue by remember(feed) { mutableStateOf(feed ?: "") }
 
                     CareInstructionRow(
                         label = "Lumière",

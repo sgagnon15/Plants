@@ -17,7 +17,7 @@ import com.sergeapps.plants.data.item.DeletePictureResponseDto
 import com.sergeapps.plants.data.item.UploadPicResponseDto
 import com.sergeapps.plants.ui.item.InventoryRowUi
 import com.sergeapps.plants.util.MultipartUtils
-import com.sergeapps.plants.vm.item.PlantCareDto
+import com.sergeapps.plants.data.api.PlantCareDto
 
 
 class PlantsRepository(
@@ -228,7 +228,20 @@ class PlantsRepository(
     }
 
     suspend fun getPlantCare(plantName: String): PlantCareDto {
-        return api.getPlantCare(plantName)
-    }
-}
+        android.util.Log.d("PlantsDebug", "Repository.getPlantCare START plantName=$plantName")
+
+        try {
+            android.util.Log.d("PlantsDebug", "Repository.getPlantCare before api call")
+
+            val result = api.getPlantCare(plantName)
+
+            android.util.Log.d("PlantsDebug", "Repository.getPlantCare after api call result=$result")
+
+            return result
+
+        } catch (e: Exception) {
+            android.util.Log.e("PlantsDebug", "Repository.getPlantCare ERROR", e)
+            throw e
+        }
+    }}
 
