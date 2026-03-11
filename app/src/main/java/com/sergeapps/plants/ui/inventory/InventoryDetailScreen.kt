@@ -61,12 +61,19 @@ import androidx.compose.material3.TextField
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import android.app.DatePickerDialog
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.text.KeyboardActions
 import java.util.Calendar
 import java.text.SimpleDateFormat
 import java.util.Locale
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
+
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.TextFieldValue
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -418,10 +425,29 @@ fun PropertyRow(
     valueType: String,
     onChange: (String) -> Unit
 ) {
+    val isNumber = valueType == "number"
+    val focusManager = LocalFocusManager.current
 
-    val keyboardType =
-        if (valueType == "number") KeyboardType.Decimal
-        else KeyboardType.Text
+    var textFieldValue by remember {
+        mutableStateOf(
+            TextFieldValue(
+                text = value,
+                selection = TextRange(value.length)
+            )
+        )
+    }
+
+    var hadFocus by remember { mutableStateOf(false) }
+    var clearedOnFirstFocus by remember(value) { mutableStateOf(false) }
+
+    LaunchedEffect(value) {
+        if (!hadFocus && textFieldValue.text != value) {
+            textFieldValue = TextFieldValue(
+                text = value,
+                selection = TextRange(value.length)
+            )
+        }
+    }
 
     Row(
         modifier = Modifier
@@ -429,7 +455,6 @@ fun PropertyRow(
             .padding(vertical = 1.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-
         Text(
             text = label,
             modifier = Modifier.width(130.dp),
@@ -438,18 +463,61 @@ fun PropertyRow(
         )
 
         BasicTextField(
-            value = value,
-            onValueChange = onChange,
+            value = textFieldValue,
+            onValueChange = { newValue ->
+                if (isNumber) {
+                    val filteredText = newValue.text.filter { character ->
+                        character.isDigit() || character == '.' || character == ','
+                    }
+
+                    textFieldValue = newValue.copy(text = filteredText)
+                    onChange(filteredText)
+                } else {
+                    textFieldValue = newValue
+                    onChange(newValue.text)
+                }
+            },
             modifier = Modifier
                 .weight(1f)
-                .height(26.dp),
+                .height(26.dp)
+                .onFocusChanged { focusState ->
+                    val nowFocused = focusState.isFocused
+
+                    if (nowFocused && !hadFocus) {
+                        if (isNumber && !clearedOnFirstFocus) {
+                            textFieldValue = TextFieldValue(
+                                text = "",
+                                selection = TextRange(0)
+                            )
+                            onChange("")
+                            clearedOnFirstFocus = true
+                        }
+                    }
+
+                    if (!nowFocused && hadFocus) {
+                        textFieldValue = TextFieldValue(
+                            text = textFieldValue.text,
+                            selection = TextRange(0)
+                        )
+                        clearedOnFirstFocus = false
+                    }
+
+                    hadFocus = nowFocused
+                },
             singleLine = true,
             textStyle = MaterialTheme.typography.bodySmall.copy(
                 color = MaterialTheme.colorScheme.onSurface
             ),
             keyboardOptions = KeyboardOptions(
-                keyboardType = keyboardType
-            )
+                keyboardType = if (isNumber) KeyboardType.Decimal else KeyboardType.Text,
+                imeAction = ImeAction.Done
+            ),
+            keyboardActions = KeyboardActions(
+                onDone = {
+                    focusManager.clearFocus()
+                }
+            ),
+            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary)
         )
     }
 }
@@ -486,12 +554,19 @@ fun DatePickerRow(
 
             BasicTextField(
                 value = value,
-                onValueChange = {},
+                onValueChange = { newValue ->
+                    if (enabled) {
+                        onChange(newValue)
+                    }
+                },
                 modifier = Modifier.weight(1f),
                 singleLine = true,
-                enabled = false,
+                enabled = enabled,
                 textStyle = MaterialTheme.typography.bodySmall.copy(
                     color = MaterialTheme.colorScheme.onSurface
+                ),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number
                 )
             )
 
@@ -516,7 +591,8 @@ fun DatePickerRow(
                                 if (parsed != null) {
                                     calendar.time = parsed
                                 }
-                            } catch (_: Exception) {}
+                            } catch (_: Exception) {
+                            }
                         }
 
                         DatePickerDialog(

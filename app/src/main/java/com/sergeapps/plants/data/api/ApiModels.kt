@@ -139,6 +139,7 @@ data class StockUpsertRequest(
     @SerialName("location")       val location: String,
     @SerialName("position")       val position: String,
     @SerialName("purchaseDate")   val purchaseDate: String,
+    @SerialName("purchasePrice")  val purchasePrice: String,
     @SerialName("lastTransplant") val lastTransplant: String,
     @SerialName("lastDivision")   val lastDivision: String,
     @SerialName("lastFeeding")    val lastFeeding: String

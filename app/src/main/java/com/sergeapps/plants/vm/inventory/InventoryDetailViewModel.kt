@@ -82,7 +82,6 @@ class InventoryDetailViewModel(app: Application) : AndroidViewModel(app) {
                         initialItemNumber = detail.itemNumber,
                         editLocation = detail.location.orEmpty(),
                         editposition = detail.position.orEmpty(),
-
                         specimenNumberText = detail.specimenNumber.orEmpty(),
                         vendorText = detail.vendor.orEmpty(),
                         purchaseDateText = detail.purchaseDate.orEmpty(),
@@ -155,12 +154,18 @@ class InventoryDetailViewModel(app: Application) : AndroidViewModel(app) {
                 val api = PlantsApiFactory.create(settings)
                 val repo = PlantsRepository(api)
 
+                val purchasePriceValue = current.purchasePriceText
+                    .replace("$", "")
+                    .replace(",", ".")
+                    .toDoubleOrNull()
+
                 val body = StockUpsertRequest(
                     itemNumber      = itemNumberToSave,
                     specimenNumber  = current.specimenNumberText,
                     location        = newLocation,
                     position        = newposition,
                     purchaseDate    = current.purchaseDateText,
+                    purchasePrice   = purchasePriceValue.toString(),
                     lastTransplant  = current.lastTransplantText,
                     lastDivision    = current.lastDivisionText,
                     lastFeeding     = current.lastFeedingText
