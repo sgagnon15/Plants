@@ -114,7 +114,7 @@ data class StockListRowDto(
 @Serializable
 data class StockDetailDto(
     @SerialName("id")               val stockId: Int,
-    @SerialName("specimennumber")   val specimenNumber: Int? = null,
+    @SerialName("specimenNumber")   val specimenNumber: String? = null,
     @SerialName("itemnumber")       val itemNumber: String,
     @SerialName("creationDate")     val creationDate: String,
     @SerialName("location")         val location: String,
@@ -135,8 +135,9 @@ data class StockDetailDto(
 @Serializable
 data class StockUpsertRequest(
     @SerialName("itemnumber")     val itemNumber: String,
+    @SerialName("specimennumber") val specimenNumber: String? = null,
     @SerialName("location")       val location: String,
-    @SerialName("position")         val position: String,
+    @SerialName("position")       val position: String,
     @SerialName("purchaseDate")   val purchaseDate: String,
     @SerialName("lastTransplant") val lastTransplant: String,
     @SerialName("lastDivision")   val lastDivision: String,
@@ -165,7 +166,7 @@ data class StockListDto(
 
 @Serializable
 data class StockCreateResponseDto(
-    @SerialName("stockid") val stockId: Int,
+    @SerialName("stockid")    val stockId: Int,
     @SerialName("itemnumber") val itemNumber: String
 )
 

@@ -30,6 +30,7 @@ data class InventoryDetailUiState(
     val initialItemNumber: String = "",
     val stockTrans: StockTransUiState = StockTransUiState(),
 
+    val specimenNumberText: String = "",
     val vendorText: String = "",
     val purchaseDateText: String = "",
     val lastTransplantText: String = "",
@@ -82,6 +83,7 @@ class InventoryDetailViewModel(app: Application) : AndroidViewModel(app) {
                         editLocation = detail.location.orEmpty(),
                         editposition = detail.position.orEmpty(),
 
+                        specimenNumberText = detail.specimenNumber.orEmpty(),
                         vendorText = detail.vendor.orEmpty(),
                         purchaseDateText = detail.purchaseDate.orEmpty(),
                         lastTransplantText = detail.lastTransplant.orEmpty(),
@@ -154,13 +156,14 @@ class InventoryDetailViewModel(app: Application) : AndroidViewModel(app) {
                 val repo = PlantsRepository(api)
 
                 val body = StockUpsertRequest(
-                    itemNumber = itemNumberToSave,
-                    location = newLocation,
-                    position = newposition,
-                    purchaseDate = current.purchaseDateText,
-                    lastTransplant = current.lastTransplantText,
-                    lastDivision = current.lastDivisionText,
-                    lastFeeding = current.lastFeedingText
+                    itemNumber      = itemNumberToSave,
+                    specimenNumber  = current.specimenNumberText,
+                    location        = newLocation,
+                    position        = newposition,
+                    purchaseDate    = current.purchaseDateText,
+                    lastTransplant  = current.lastTransplantText,
+                    lastDivision    = current.lastDivisionText,
+                    lastFeeding     = current.lastFeedingText
                 )
 
                 val returnedStockId = repo.upsertStock(stockId = stockIdToSave, body = body)
@@ -170,7 +173,6 @@ class InventoryDetailViewModel(app: Application) : AndroidViewModel(app) {
                 uiState.value = current.copy(
                     isSaving = false,
                     detail = refreshed,
-                    // une fois créé, tu peux remettre initialItemNumber à 0 ou garder
                     initialItemNumber = refreshed.itemNumber,
                     editLocation = refreshed.location.orEmpty(),
                     editposition = refreshed.position.orEmpty(),
@@ -262,7 +264,6 @@ class InventoryDetailViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun onPurchasePriceChanged(value: String) {
-
         val number = value
             .replace("$", "")
             .replace(",", ".")

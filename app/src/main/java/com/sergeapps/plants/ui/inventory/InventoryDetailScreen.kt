@@ -220,7 +220,7 @@ fun InventoryDetailScreen(
                     ) {
                         detail?.botanicalvar?.let { Text(it, style = MaterialTheme.typography.titleMedium) }
                         Text(
-                            text = "No. article: ${detail?.itemNumber}",
+                            text = "No. spécimen: ${detail?.specimenNumber}",
                             color = MaterialTheme.colorScheme.primary,
                             style = MaterialTheme.typography.bodyMedium,
                             modifier = Modifier
@@ -304,6 +304,7 @@ fun InventoryDetailScreen(
                         PropertyRow(
                             label = "Fournisseur",
                             value = state.vendorText,
+                            valueType = "text",
                             onChange = viewModel::onVendorChanged
                         )
 
@@ -337,8 +338,9 @@ fun InventoryDetailScreen(
 
                         PropertyRow(
                             label = "Prix payé",
-                            value = state?.purchasePriceText.toString(),
-                            onChange = viewModel::onVendorChanged
+                            value = state.purchasePriceText,
+                            valueType = "number",
+                            onChange = viewModel::onPurchasePriceChanged
                         )
 
                         DetailRow(
@@ -413,8 +415,13 @@ fun EditableRow(
 fun PropertyRow(
     label: String,
     value: String,
+    valueType: String,
     onChange: (String) -> Unit
 ) {
+
+    val keyboardType =
+        if (valueType == "number") KeyboardType.Decimal
+        else KeyboardType.Text
 
     Row(
         modifier = Modifier
@@ -441,12 +448,11 @@ fun PropertyRow(
                 color = MaterialTheme.colorScheme.onSurface
             ),
             keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Decimal
+                keyboardType = keyboardType
             )
         )
     }
 }
-
 
 @Composable
 fun DatePickerRow(
