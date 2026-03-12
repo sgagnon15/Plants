@@ -10,6 +10,7 @@ import com.sergeapps.plants.ui.HomeScreen
 import com.sergeapps.plants.ui.item.ItemDetailScreen
 import com.sergeapps.plants.ui.item.ItemsListScreen
 import com.sergeapps.plants.ui.SettingsScreen
+import com.sergeapps.plants.ui.batchtransfer.BatchTransferScreen
 import com.sergeapps.plants.ui.inventory.InventoryScreen
 import com.sergeapps.plants.ui.inventory.InventoryDetailScreen
 import com.sergeapps.plants.ui.location.LocationsScreen
@@ -27,7 +28,8 @@ fun plantsApp() {
                 onOpenItems = { navController.navigate(Routes.ItemsList) },
                 onOpenInventory = { navController.navigate(Routes.Inventory) },
                 onOpenLocations = { navController.navigate(Routes.Locations) },
-                onOpenSettings = { navController.navigate(Routes.Settings) }
+                onOpenSettings = { navController.navigate(Routes.Settings) },
+                onOpenBatchTransfer = { navController.navigate(Routes.BatchTransfer) }
             )
         }
 
@@ -101,6 +103,12 @@ fun plantsApp() {
             )
         }
 
+        composable(route = Routes.BatchTransfer) {
+            BatchTransferScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+
         // ---- SETTINGS ----
 
         composable(Routes.Settings) {
@@ -122,6 +130,7 @@ object Routes {
     const val Inventory = "inventory"
     const val Locations = "locations"
     const val InventoryDetail = "inventoryDetail"
+    const val BatchTransfer = "batch_transfer"
 
     fun itemDetail(id: Int): String = "$ItemDetail/$id"
 

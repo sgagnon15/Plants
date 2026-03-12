@@ -114,6 +114,7 @@ data class StockListRowDto(
     @SerialName("id")               val stockId: Int,
     @SerialName("commonName")       val commonName: String,
     @SerialName("botanicalvar")     val botanicalvar: String,
+    @SerialName("cultivar")         val cultivar: String? = null,
     @SerialName("thumbnailurl")     val thumbnailurl: String? = null,
     @SerialName("photoversion")     val photoVersion: Int? = null
 )
@@ -182,6 +183,12 @@ data class LocationDto(
 )
 
 @Serializable
+data class StockMoveLocationBody(
+    @SerialName("location") val location: String,
+    @SerialName("position") val position: String
+)
+
+@Serializable
 data class CreateLocationBody(
     @SerialName("location") val location: String,
     @SerialName("nbbin") val nbBin: Int,
@@ -193,10 +200,6 @@ data class VendorDto(
     @SerialName("vendor")
     val vendor: String
 )
-
-//  -----------------------------------------------------------------
-// Classifications & Specifications
-//  -----------------------------------------------------------------
 
 @Serializable
 data class WhereUsedDto(

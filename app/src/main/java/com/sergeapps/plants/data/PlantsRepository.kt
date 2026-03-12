@@ -17,6 +17,7 @@ import com.sergeapps.plants.data.item.UploadPicResponseDto
 import com.sergeapps.plants.ui.item.InventoryRowUi
 import com.sergeapps.plants.util.MultipartUtils
 import com.sergeapps.plants.data.api.PlantCareDto
+import com.sergeapps.plants.data.api.StockMoveLocationBody
 import com.sergeapps.plants.vm.item.UpdateItemDetailDto
 
 
@@ -304,6 +305,30 @@ class PlantsRepository(
             .filter { it.isNotBlank() }
             .distinct()
             .sorted()
+    }
+
+    suspend fun moveStockLocation(
+        stockId: Int,
+        location: String,
+        position: String
+    ): Int {
+        val response = api.moveStockLocation(
+            stockId = stockId,
+            body = StockMoveLocationBody(
+                location = location,
+                position = position
+            )
+        )
+
+        return response.stockId
+    }
+
+    suspend fun getStockListByLocation(location: String): List<StockListRowDto> {
+        return api.getStockList(
+            location = location,
+            pageNumber = 1,
+            nbItems = 9999
+        )
     }
 }
 

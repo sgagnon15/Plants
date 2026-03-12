@@ -44,7 +44,7 @@ interface PlantsApiService {
     ): Response<Unit>
 
     //  -----------------------------------------------------------------
-    // Vendors & Manufacturers
+    // Vendors
     //  -----------------------------------------------------------------
 
     @GET("vendorlist")
@@ -144,6 +144,12 @@ interface PlantsApiService {
     suspend fun upsertStock(
         @Query("id") stockId: Int,
         @Body body: StockUpsertRequest
+    ): StockCreateResponseDto
+
+    @POST("stock")
+    suspend fun moveStockLocation(
+        @Query("id") stockId: Int,
+        @Body body: StockMoveLocationBody
     ): StockCreateResponseDto
 
     @DELETE("stock")

@@ -37,7 +37,8 @@ fun HomeScreen(
     onOpenItems: () -> Unit,
     onOpenInventory: () -> Unit,
     onOpenLocations: () -> Unit,
-    onOpenSettings: () -> Unit
+    onOpenSettings: () -> Unit,
+    onOpenBatchTransfer: () -> Unit
 ) {
     Scaffold(
         topBar = { TopAppBar(title = { Text("Gestion des plantes") }) }
@@ -96,9 +97,7 @@ fun HomeScreen(
                     title = "Déplacements",
                     subtitle = "Déplacements est spécimens en lots",
                     icon = painterResource(R.drawable.ic_move),
-                    onClick = {
-                        Toast.makeText(context, "À venir bientôt", Toast.LENGTH_SHORT).show()
-                    },
+                    onClick = onOpenBatchTransfer,
                     modifier = Modifier.weight(1f)
                 )
             }
