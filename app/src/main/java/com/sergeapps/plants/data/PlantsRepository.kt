@@ -37,7 +37,8 @@ class PlantsRepository(
         water: String? = null,
         temperature: String? = null,
         dormancy: String? = null,
-        feed: String? = null
+        feed: String? = null,
+        aiUpdated: Int = 0
     ): String {
         api.upsertItem(
             itemId = 0,
@@ -54,7 +55,8 @@ class PlantsRepository(
                 temperature = temperature,
                 dormancy = dormancy,
                 feed = feed,
-                pictureRotation = 0
+                pictureRotation = 0,
+                AIUpdated = aiUpdated
             )
         )
         return itemNumber
@@ -73,7 +75,8 @@ class PlantsRepository(
         water: String? = null,
         temperature: String? = null,
         dormancy: String? = null,
-        feed: String? = null
+        feed: String? = null,
+        aiUpdated: Int = 0
     ) {
         api.upsertItem(
             itemId = itemId,
@@ -90,7 +93,8 @@ class PlantsRepository(
                 temperature = temperature,
                 dormancy = dormancy,
                 feed = feed,
-                pictureRotation = 0
+                pictureRotation = 0,
+                AIUpdated = aiUpdated
             )
         )
     }

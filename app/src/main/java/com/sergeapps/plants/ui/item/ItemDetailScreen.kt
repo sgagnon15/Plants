@@ -88,16 +88,11 @@ import androidx.core.content.FileProvider
 import java.io.File
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.filled.PhotoCamera
-import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.material.icons.filled.CameraAlt
 import android.content.pm.PackageManager
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.core.content.ContextCompat
-import android.app.Activity
-import com.google.zxing.integration.android.IntentIntegrator
 import android.content.Intent
-import androidx.activity.result.contract.ActivityResultContract
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material.icons.filled.OpenInNew
@@ -402,6 +397,7 @@ fun ItemDetailScreen(
                                     feed = state.feed,
                                     expanded = careExpanded,
                                     loadingCareAi = loadingCareAi,
+                                    aiUpdated = state.aiUpdated,
                                     onExpandedChange = { careExpanded = it },
                                     onAiFill = {
                                         viewModel.fillCareInstructionsWithAI(
@@ -1049,6 +1045,7 @@ private fun CareInstructionsCard(
     feed: String?,
     expanded: Boolean,
     loadingCareAi: Boolean,
+    aiUpdated: Int,
     onExpandedChange: (Boolean) -> Unit,
     onAiFill: () -> Unit,
     onLightChange: (String) -> Unit,
@@ -1058,7 +1055,6 @@ private fun CareInstructionsCard(
     onDormancyChange: (String) -> Unit,
     onFeedChange: (String) -> Unit
 ) {
-
     Card(
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
@@ -1075,36 +1071,64 @@ private fun CareInstructionsCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "Instructions de soins",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+
+                    Text(
+                        text = "Instructions de soins",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+
+                    if (aiUpdated == 1) {
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        Box(
+                            modifier = Modifier
+                                .background(
+                                    color = MaterialTheme.colorScheme.primary,
+                                    shape = RoundedCornerShape(6.dp)
+                                )
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = "AI",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    IconButton(
-                        onClick = { onAiFill() },
-                        enabled = !loadingCareAi
-                    ) {
+                    if (aiUpdated == 0) {
+                        IconButton(
+                            onClick = { onAiFill() },
+                            enabled = !loadingCareAi
+                        ) {
 
-                        if (loadingCareAi) {
+                            if (loadingCareAi) {
 
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(24.dp),
-                                strokeWidth = 2.dp
-                            )
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(24.dp),
+                                    strokeWidth = 2.dp
+                                )
 
-                        } else {
+                            } else {
 
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_chatgpt),
-                                contentDescription = "Remplir avec ChatGPT",
-                                tint = Color.Unspecified,
-                                modifier = Modifier.size(40.dp)
-                            )
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_chatgpt),
+                                    contentDescription = "Remplir avec ChatGPT",
+                                    tint = Color.Unspecified,
+                                    modifier = Modifier.size(40.dp)
+                                )
 
+                            }
                         }
                     }
                 }

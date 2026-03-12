@@ -39,9 +39,9 @@ data class UpdateItemDetailDto(
     val temperatureMin: Int?,
     val temperatureMax: Int?,
     val dormancy: String,
-    val feed: String
+    val feed: String,
+    val aiUpdated: Int
 )
-
 data class ItemDetailUiState(
     val isLoading: Boolean = true,
     val isSaving: Boolean = false,
@@ -51,6 +51,7 @@ data class ItemDetailUiState(
     val isNewItem: Boolean = false,
     val itemDetail: ItemDetailDto? = null,
     val itemId: Int = 0,
+    val aiUpdated: Int = 0,
 
     // Champs éditables (création / édition)
     val itemNumberText: String = "",
@@ -164,7 +165,8 @@ class ItemDetailViewModel(app: Application) : AndroidViewModel(app) {
                     humidity = dto.humidity,
                     transplant = dto.transplant,
                     otherCare = dto.otherCare,
-                    temperature = dto.temperature
+                    temperature = dto.temperature,
+                    aiUpdated = dto.AIUpdated
                 )
 
                 dto.itemNumber?.let { itemNumber ->
@@ -323,7 +325,6 @@ class ItemDetailViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     suspend fun save(): Comparable<Nothing> {
-
         uiState.update {
             it.copy(
                 isSaving = true,
@@ -334,18 +335,13 @@ class ItemDetailViewModel(app: Application) : AndroidViewModel(app) {
         }
 
         val result = try {
-
             val currentState = uiState.value
-
             val itemNumber = currentState.itemNumberText.trim().toIntOrNull()
                 ?: throw IllegalArgumentException("No. article invalide")
-
             val botanicalvar = currentState.botanicalvarText.trim()
                 .ifBlank { throw IllegalArgumentException("Description requise") }
-
             val vendor = currentState.vendorText.trim()
             val vendorUrl = currentState.vendorUrlText.trim().ifBlank { null }
-
             val createdOrUpdatedId = if (currentState.isNewItem) {
 
                 repository.createItem(
@@ -360,7 +356,8 @@ class ItemDetailViewModel(app: Application) : AndroidViewModel(app) {
                     water = currentState.water?.trim().orEmpty(),
                     temperature = currentState.temperature?.trim().orEmpty(),
                     dormancy = currentState.dormancy?.trim().orEmpty(),
-                    feed = currentState.feed?.trim().orEmpty()
+                    feed = currentState.feed?.trim().orEmpty(),
+                    aiUpdated  = currentState.aiUpdated
                 )
 
             } else {
@@ -383,7 +380,8 @@ class ItemDetailViewModel(app: Application) : AndroidViewModel(app) {
                     water = currentState.water?.trim().orEmpty(),
                     temperature = currentState.temperature?.trim().orEmpty(),
                     dormancy = currentState.dormancy?.trim().orEmpty(),
-                    feed = currentState.feed?.trim().orEmpty()
+                    feed = currentState.feed?.trim().orEmpty(),
+                    aiUpdated = currentState.aiUpdated
                 )
 
                 existingId
@@ -449,6 +447,10 @@ class ItemDetailViewModel(app: Application) : AndroidViewModel(app) {
             try {
                 _loadingCareAi.value = true
 
+                uiState.update {
+                    it.copy(aiUpdated = 1)
+                }
+
                 val care = repository.getPlantCare(plantName)
                 val current = uiState.value
 
@@ -460,7 +462,8 @@ class ItemDetailViewModel(app: Application) : AndroidViewModel(app) {
                     soil = care.substrat ?: current.soil,
                     dormancy = care.dormance ?: current.dormancy,
                     transplant = care.rempotage ?: current.transplant,
-                    humidity = care.humidité ?: current.humidity
+                    humidity = care.humidité ?: current.humidity,
+                    aiUpdated = 1
                 )
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -506,7 +509,8 @@ class ItemDetailViewModel(app: Application) : AndroidViewModel(app) {
                 temperatureMin = temperatureMin.toIntOrNull(),
                 temperatureMax = temperatureMax.toIntOrNull(),
                 dormancy = dormancy.trim(),
-                feed = feed.trim()
+                feed = feed.trim(),
+                aiUpdated = uiState.value.aiUpdated
             )
 
             val result = repository.updateItemDetail(payload)
@@ -525,6 +529,7 @@ class ItemDetailViewModel(app: Application) : AndroidViewModel(app) {
                             water = payload.water,
                             dormancy = payload.dormancy,
                             feed = payload.feed,
+                            aiUpdated = payload.aiUpdated,
                             isSaving = false,
                             saveSuccess = true,
                             saveError = null

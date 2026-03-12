@@ -25,7 +25,8 @@ data class ItemUpsertDto(
     @SerialName("transplant")   val transplant: String? = null,
     @SerialName("otherCare")    val otherCare: String? = null,
     @SerialName("humidity")     val humidity: String? = null,
-    @SerialName("temperature")  val temperature: String? = null
+    @SerialName("temperature")  val temperature: String? = null,
+    @SerialName("AIUpdated")    val AIUpdated: Int = 0
 )
 
 @Serializable
@@ -48,6 +49,7 @@ data class ItemDetailDto(
     @SerialName("url")          val url: String? = null,
     @SerialName("wiki")         val wiki: String? = null,
     @SerialName("thumbnailurl") val thumbnailurl: String? = null,
+    @SerialName("AIUpdated")    val AIUpdated: Int = 0,
     @SerialName("pictureRotation") val pictureRotation: Int,
 
     //  Care instructions
