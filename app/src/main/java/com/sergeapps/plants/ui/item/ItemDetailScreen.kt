@@ -1074,7 +1074,6 @@ private fun CareInstructionsCard(
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-
                     Text(
                         text = "Instructions de soins",
                         style = MaterialTheme.typography.titleMedium,
@@ -1082,7 +1081,6 @@ private fun CareInstructionsCard(
                     )
 
                     if (aiUpdated == 1) {
-
                         Spacer(modifier = Modifier.width(8.dp))
 
                         Box(
@@ -1111,23 +1109,18 @@ private fun CareInstructionsCard(
                             onClick = { onAiFill() },
                             enabled = !loadingCareAi
                         ) {
-
                             if (loadingCareAi) {
-
                                 CircularProgressIndicator(
                                     modifier = Modifier.size(24.dp),
                                     strokeWidth = 2.dp
                                 )
-
                             } else {
-
                                 Icon(
                                     painter = painterResource(id = R.drawable.ic_chatgpt),
                                     contentDescription = "Remplir avec ChatGPT",
                                     tint = Color.Unspecified,
                                     modifier = Modifier.size(40.dp)
                                 )
-
                             }
                         }
                     }
