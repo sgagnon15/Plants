@@ -60,6 +60,7 @@ import com.sergeapps.plants.ui.item.DetailRow
 import androidx.compose.material3.TextField
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import android.app.DatePickerDialog
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardActions
 import java.util.Calendar
@@ -74,9 +75,11 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.foundation.layout.FlowRow
 
 
-@OptIn(ExperimentalMaterial3Api::class)
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun InventoryDetailScreen(
     stockId: Int,
@@ -226,18 +229,6 @@ fun InventoryDetailScreen(
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         detail?.botanicalvar?.let { Text(it, style = MaterialTheme.typography.titleMedium) }
-                        Text(
-                            text = "No. spécimen: " +
-                                    if (detail != null) detail.specimenNumber.orEmpty() else state.specimenNumberText,
-                            color = MaterialTheme.colorScheme.primary,
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(6.dp))
-                                .clickable {
-                                    detail?.stockId?.let { onOpenItemDetail(it) }
-                                }
-                                .padding(vertical = 4.dp)
-                        )
                     }
                 }
             }
@@ -250,10 +241,13 @@ fun InventoryDetailScreen(
                     ) {
                         var locationMenuExpanded by remember { mutableStateOf(false) }
 
-                        Row(
+                        FlowRow(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            maxItemsInEachRow = 2
                         ) {
+
                             ExposedDropdownMenuBox(
                                 expanded = locationMenuExpanded,
                                 onExpandedChange = { if (isEditing) locationMenuExpanded = !locationMenuExpanded },
@@ -289,13 +283,14 @@ fun InventoryDetailScreen(
                                 }
                             }
 
-                            OutlinedTextField(
+                            EditablePositionDropdownField(
                                 value = state.editposition,
-                                onValueChange = { viewModel.updateposition(it) },
-                                label = { Text("Position") },
-                                modifier = Modifier.weight(1f),
-                                readOnly = !isEditing
+                                options = state.positions,
+                                enabled = isEditing,
+                                onValueChange = viewModel::updateposition,
+                                modifier = Modifier.weight(1f)
                             )
+
                         }
 
                         val focusManager = LocalFocusManager.current
@@ -309,11 +304,12 @@ fun InventoryDetailScreen(
                         modifier = Modifier.padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        PropertyRow(
+                        EditableVendorDropdownRow(
                             label = "Fournisseur",
                             value = state.vendorText,
-                            valueType = "text",
-                            onChange = viewModel::onVendorChanged
+                            options = state.vendors,
+                            enabled = isEditing,
+                            onValueChange = viewModel::onVendorChanged
                         )
 
                         DatePickerRow(
@@ -348,6 +344,7 @@ fun InventoryDetailScreen(
                             label = "Prix payé",
                             value = state.purchasePriceText,
                             valueType = "number",
+                            enabled = isEditing,
                             onChange = viewModel::onPurchasePriceChanged
                         )
 
@@ -424,6 +421,7 @@ fun PropertyRow(
     label: String,
     value: String,
     valueType: String,
+    enabled: Boolean = true,
     onChange: (String) -> Unit
 ) {
     val isNumber = valueType == "number"
@@ -463,63 +461,74 @@ fun PropertyRow(
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
-        BasicTextField(
-            value = textFieldValue,
-            onValueChange = { newValue ->
-                if (isNumber) {
-                    val filteredText = newValue.text.filter { character ->
-                        character.isDigit() || character == '.' || character == ','
+        if (enabled) {
+            BasicTextField(
+                value = textFieldValue,
+                onValueChange = { newValue ->
+                    if (isNumber) {
+                        val filteredText = newValue.text.filter { character ->
+                            character.isDigit() || character == '.' || character == ','
+                        }
+
+                        textFieldValue = newValue.copy(text = filteredText)
+                        onChange(filteredText)
+                    } else {
+                        textFieldValue = newValue
+                        onChange(newValue.text)
                     }
+                },
+                modifier = Modifier
+                    .weight(1f)
+                    .height(26.dp)
+                    .onFocusChanged { focusState ->
+                        val nowFocused = focusState.isFocused
 
-                    textFieldValue = newValue.copy(text = filteredText)
-                    onChange(filteredText)
-                } else {
-                    textFieldValue = newValue
-                    onChange(newValue.text)
-                }
-            },
-            modifier = Modifier
-                .weight(1f)
-                .height(26.dp)
-                .onFocusChanged { focusState ->
-                    val nowFocused = focusState.isFocused
+                        if (nowFocused && !hadFocus) {
+                            if (isNumber && !clearedOnFirstFocus) {
+                                textFieldValue = TextFieldValue(
+                                    text = "",
+                                    selection = TextRange(0)
+                                )
+                                onChange("")
+                                clearedOnFirstFocus = true
+                            }
+                        }
 
-                    if (nowFocused && !hadFocus) {
-                        if (isNumber && !clearedOnFirstFocus) {
+                        if (!nowFocused && hadFocus) {
                             textFieldValue = TextFieldValue(
-                                text = "",
+                                text = textFieldValue.text,
                                 selection = TextRange(0)
                             )
-                            onChange("")
-                            clearedOnFirstFocus = true
+                            clearedOnFirstFocus = false
                         }
-                    }
 
-                    if (!nowFocused && hadFocus) {
-                        textFieldValue = TextFieldValue(
-                            text = textFieldValue.text,
-                            selection = TextRange(0)
-                        )
-                        clearedOnFirstFocus = false
+                        hadFocus = nowFocused
+                    },
+                singleLine = true,
+                textStyle = MaterialTheme.typography.bodySmall.copy(
+                    color = MaterialTheme.colorScheme.onSurface
+                ),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = if (isNumber) KeyboardType.Decimal else KeyboardType.Text,
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        focusManager.clearFocus()
                     }
-
-                    hadFocus = nowFocused
-                },
-            singleLine = true,
-            textStyle = MaterialTheme.typography.bodySmall.copy(
+                ),
+                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary)
+            )
+        } else {
+            Text(
+                text = value,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(26.dp),
+                style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurface
-            ),
-            keyboardOptions = KeyboardOptions(
-                keyboardType = if (isNumber) KeyboardType.Decimal else KeyboardType.Text,
-                imeAction = ImeAction.Done
-            ),
-            keyboardActions = KeyboardActions(
-                onDone = {
-                    focusManager.clearFocus()
-                }
-            ),
-            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary)
-        )
+            )
+        }
     }
 }
 
@@ -618,6 +627,164 @@ fun DatePickerRow(
                 else
                     MaterialTheme.colorScheme.outline
             )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun EditableVendorDropdownRow(
+    label: String,
+    value: String,
+    options: List<String>,
+    enabled: Boolean,
+    onValueChange: (String) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    val filteredOptions = remember(value, options) {
+        if (value.isBlank()) {
+            options
+        } else {
+            options.filter { option ->
+                option.contains(value, ignoreCase = true)
+            }
+        }
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 1.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            modifier = Modifier.width(130.dp),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        ExposedDropdownMenuBox(
+            expanded = expanded && enabled,
+            onExpandedChange = {
+                if (enabled) {
+                    expanded = !expanded
+                }
+            },
+            modifier = Modifier.weight(1f)
+        ) {
+            Box(
+                modifier = Modifier
+                    .menuAnchor()
+                    .fillMaxWidth()
+                    .height(26.dp),
+                contentAlignment = Alignment.CenterStart
+            ) {
+                BasicTextField(
+                    value = value,
+                    onValueChange = {
+                        onValueChange(it)
+                        if (enabled) {
+                            expanded = true
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    enabled = enabled,
+                    textStyle = MaterialTheme.typography.bodySmall.copy(
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                )
+            }
+
+            ExposedDropdownMenu(
+                expanded = expanded && filteredOptions.isNotEmpty(),
+                onDismissRequest = { expanded = false }
+            ) {
+                filteredOptions.forEach { vendor ->
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                text = vendor,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        },
+                        onClick = {
+                            onValueChange(vendor)
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun EditablePositionDropdownField(
+    value: String,
+    options: List<String>,
+    enabled: Boolean,
+    modifier: Modifier = Modifier,
+    onValueChange: (String) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    val filteredOptions = remember(value, options) {
+        if (value.isBlank()) {
+            options
+        } else {
+            options.filter {
+                it.contains(value, ignoreCase = true)
+            }
+        }
+    }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded && enabled,
+        onExpandedChange = {
+            if (enabled) {
+                expanded = !expanded
+            }
+        },
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = {
+                onValueChange(it)
+                if (enabled) {
+                    expanded = true
+                }
+            },
+            label = { Text("Position") },
+            modifier = Modifier
+                .menuAnchor()
+                .fillMaxWidth(),
+            singleLine = true,
+            enabled = enabled,
+            trailingIcon = {
+                ExposedDropdownMenuDefaults.TrailingIcon(
+                    expanded = expanded && enabled
+                )
+            }
+        )
+
+        ExposedDropdownMenu(
+            expanded = expanded && filteredOptions.isNotEmpty(),
+            onDismissRequest = { expanded = false }
+        ) {
+            filteredOptions.forEach { position ->
+                DropdownMenuItem(
+                    text = { Text(position) },
+                    onClick = {
+                        onValueChange(position)
+                        expanded = false
+                    }
+                )
+            }
         }
     }
 }

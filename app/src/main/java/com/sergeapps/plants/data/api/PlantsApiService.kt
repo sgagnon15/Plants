@@ -50,9 +50,8 @@ interface PlantsApiService {
     @GET("vendorlist")
     suspend fun getVendorList(
         @Query("pagenumber") pageNumber: Int = 1,
-        @Query("nbitems") nbItems: Int = 10,
-        @Query("filter") filter: String? = null
-    ): List<VendorRowDto>
+        @Query("nbitems") nbItems: Int = 9999
+    ): List<VendorDto>
 
     @GET("manufList")
     suspend fun getManufList(
@@ -95,6 +94,11 @@ interface PlantsApiService {
 
     @GET("location")
     suspend fun getLocations(): List<LocationDto>
+
+    @GET("locposition")
+    suspend fun getLocationPositions(
+        @Query("location") location: String
+    ): List<PositionDto>
 
     @GET("whereused")
     suspend fun getWhereUsed(

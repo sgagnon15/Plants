@@ -20,13 +20,18 @@ import kotlinx.coroutines.launch
 
 data class InventoryDetailUiState(
     val isLoading: Boolean = true,
+    val isLoadingVendors: Boolean = false,
     val isSaving: Boolean = false,
+    val isLoadingLocations: Boolean = false,
+    val isLoadingPositions: Boolean = false,
     val error: String? = null,
+
+    val positions: List<String> = emptyList(),
+    val vendors: List<String> = emptyList(),
     val detail: StockDetailDto? = null,
     val editLocation: String = "",
     val editposition: String = "",
     val locations: List<LocationDto> = emptyList(),
-    val isLoadingLocations: Boolean = false,
     val initialItemNumber: String = "",
     val stockTrans: StockTransUiState = StockTransUiState(),
 
@@ -64,32 +69,22 @@ class InventoryDetailViewModel(app: Application) : AndroidViewModel(app) {
     private var repository: PlantsRepository? = null
 
     fun load(stockId: Int, initialItemNumber: String = "") {
-
         viewModelScope.launch {
-
             uiState.update {
                 it.copy(
                     isLoading = true,
                     error = null
                 )
             }
-
             try {
-
                 val settings = settingsStore.settingsFlow.first()
-
                 val api = PlantsApiFactory.create(settings)
-
                 repository = PlantsRepository(api)
-
                 val repo = repository ?: return@launch
-
 
                 // MODE AJOUT
                 if (stockId == 0) {
-
                     val nextSpecimen = repository?.getNextSpecimen()?.toString().orEmpty()
-
                     uiState.update {
                         it.copy(
                             isLoading = false,
@@ -109,6 +104,7 @@ class InventoryDetailViewModel(app: Application) : AndroidViewModel(app) {
                     }
 
                     loadLocations()
+                    loadVendors()
                     return@launch
                 }
 
@@ -119,7 +115,6 @@ class InventoryDetailViewModel(app: Application) : AndroidViewModel(app) {
                 )
 
                 uiState.update {
-
                     it.copy(
                         isLoading = false,
                         detail = detail,
@@ -140,7 +135,8 @@ class InventoryDetailViewModel(app: Application) : AndroidViewModel(app) {
                 }
 
                 loadLocations()
-
+                loadVendors()
+                loadPositions(detail.location.orEmpty())
             } catch (e: Exception) {
 
                 uiState.update {
@@ -216,6 +212,7 @@ class InventoryDetailViewModel(app: Application) : AndroidViewModel(app) {
                 val body = StockUpsertRequest(
                     itemNumber = itemNumberToSave,
                     specimenNumber = current.specimenNumberText,
+                    vendor = current.vendorText,
                     location = newLocation,
                     position = newPosition,
                     purchaseDate = current.purchaseDateText,
@@ -290,7 +287,15 @@ class InventoryDetailViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun selectLocation(locationName: String) {
-        uiState.value = uiState.value.copy(editLocation = locationName)
+        uiState.update {
+            it.copy(
+                editLocation = locationName,
+                editposition = "",
+                positions = emptyList()
+            )
+        }
+
+        loadPositions(locationName)
     }
 
     fun deleteStock(stockId: Int, onSuccess: () -> Unit) {
@@ -351,4 +356,80 @@ class InventoryDetailViewModel(app: Application) : AndroidViewModel(app) {
             it.copy(purchasePriceText = formatted)
         }
     }
+
+    fun loadVendors() {
+        viewModelScope.launch {
+            try {
+                uiState.update {
+                    it.copy(
+                        isLoadingVendors = true,
+                        error = null
+                    )
+                }
+
+                val settings = settingsStore.settingsFlow.first()
+                val api = PlantsApiFactory.create(settings)
+                val repo = PlantsRepository(api)
+                val vendors = repo.loadVendors()
+
+                uiState.update {
+                    it.copy(
+                        isLoadingVendors = false,
+                        vendors = vendors
+                    )
+                }
+            } catch (e: Exception) {
+                uiState.update {
+                    it.copy(
+                        isLoadingVendors = false,
+                        error = e.message ?: "Erreur chargement fournisseurs"
+                    )
+                }
+            }
+        }
+    }
+
+    fun loadPositions(locationName: String) {
+        if (locationName.isBlank()) {
+            uiState.update {
+                it.copy(
+                    positions = emptyList(),
+                    isLoadingPositions = false
+                )
+            }
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                uiState.update {
+                    it.copy(
+                        isLoadingPositions = true,
+                        error = null
+                    )
+                }
+
+                val settings = settingsStore.settingsFlow.first()
+                val api = PlantsApiFactory.create(settings)
+                val repo = PlantsRepository(api)
+                val positions = repo.loadPositions(locationName)
+
+                uiState.update {
+                    it.copy(
+                        positions = positions,
+                        isLoadingPositions = false
+                    )
+                }
+            } catch (e: Exception) {
+                uiState.update {
+                    it.copy(
+                        positions = emptyList(),
+                        isLoadingPositions = false,
+                        error = e.message ?: "Erreur chargement positions"
+                    )
+                }
+            }
+        }
+    }
 }
+

@@ -263,36 +263,6 @@ class ItemDetailViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun onVendorTextChanged(text: String) {
-        uiState.value = uiState.value.copy(vendorText = text)
-        refreshVendorOptions(text)
-    }
-
-    private fun refreshVendorOptions(text: String) {
-        viewModelScope.launch {
-            uiState.value = uiState.value.copy(isVendorLoading = true)
-
-            val rows = repository.loadVendors(
-                nbItems = 9999,
-                pageNumber = 1
-            )
-
-            uiState.value = uiState.value.copy(
-                isVendorLoading = false,
-                vendorOptions = rows.map { VendorUi(it.description) }
-            )
-        }
-    }
-
-    fun onVendorSelected(vendor: String) {
-        uiState.value = uiState.value.copy(vendorText = vendor, vendorOptions = emptyList())
-        // plus tard: marquer l’item comme modifié / sauvegarder
-    }
-
-    fun onVendorOpen() {
-        refreshVendorOptions(uiState.value.vendorText)
-    }
-
     fun createTempPhotoUri(context: Context): Uri {
         val photoFile = File(
             context.cacheDir,

@@ -12,7 +12,6 @@ import com.sergeapps.plants.data.api.StockDetailDto
 import com.sergeapps.plants.data.api.StockListRowDto
 import com.sergeapps.plants.data.api.StockUpsertRequest
 import com.sergeapps.plants.data.api.UpdateLocationBody
-import com.sergeapps.plants.data.api.VendorRowDto
 import com.sergeapps.plants.data.item.DeletePictureResponseDto
 import com.sergeapps.plants.data.item.UploadPicResponseDto
 import com.sergeapps.plants.ui.item.InventoryRowUi
@@ -146,14 +145,15 @@ class PlantsRepository(
 
     // --- VENDORS & MANUFACTURERS ---
 
-    suspend fun loadVendors(
-        pageNumber: Int,
-        nbItems: Int
-    ): List<VendorRowDto> {
+    suspend fun loadVendors(): List<String> {
         return api.getVendorList(
-            nbItems = nbItems,
-            pageNumber = pageNumber
+            pageNumber = 1,
+            nbItems = 9999
         )
+            .map { it.vendor.trim() }
+            .filter { it.isNotBlank() }
+            .distinct()
+            .sorted()
     }
 
     // --- LOCATIONS ---
@@ -279,6 +279,14 @@ class PlantsRepository(
 
     suspend fun getNextSpecimen(): Int {
         return api.getNextSpecimen().nextSpecimen
+    }
+
+    suspend fun loadPositions(location: String): List<String> {
+        return api.getLocationPositions(location)
+            .map { it.position.trim() }
+            .filter { it.isNotBlank() }
+            .distinct()
+            .sorted()
     }
 }
 

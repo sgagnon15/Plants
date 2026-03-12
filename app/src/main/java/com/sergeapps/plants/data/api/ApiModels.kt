@@ -138,9 +138,16 @@ data class StockDetailDto(
 )
 
 @Serializable
+data class PositionDto(
+    @SerialName("position")
+    val position: String
+)
+
+@Serializable
 data class StockUpsertRequest(
     @SerialName("itemnumber")     val itemNumber: String,
     @SerialName("specimennumber") val specimenNumber: String? = null,
+    @SerialName("vendor")         val vendor: String? = null,
     @SerialName("location")       val location: String,
     @SerialName("position")       val position: String,
     @SerialName("purchaseDate")   val purchaseDate: String? = null,
@@ -148,17 +155,6 @@ data class StockUpsertRequest(
     @SerialName("lastTransplant") val lastTransplant: String? = null,
     @SerialName("lastDivision")   val lastDivision: String? = null,
     @SerialName("lastFeeding")    val lastFeeding: String? = null
-)
-
-@Serializable
-data class StockTransDto(
-    @SerialName("projectid") val projectId: String,
-    @SerialName("usage") val usage: String,
-    @SerialName("transtype") val transType: String, // "ISSUE" ou "RETURN"
-    @SerialName("itemnumber") val itemNumber: String,
-    @SerialName("location") val location: String,
-    @SerialName("position") val position: String,
-    @SerialName("transqty") val transQty: Int,
 )
 
 @Serializable
@@ -176,12 +172,6 @@ data class StockCreateResponseDto(
 )
 
 @Serializable
-data class VendorRowDto(
-    val pagenumber: String,
-    val description: String
-)
-
-@Serializable
 data class LocationDto(
     @SerialName("id") val id: Int,
     @SerialName("location") val location: String,
@@ -193,6 +183,12 @@ data class LocationDto(
 data class CreateLocationBody(
     @SerialName("location") val location: String,
     @SerialName("nbbin") val nbBin: Int
+)
+
+@Serializable
+data class VendorDto(
+    @SerialName("vendor")
+    val vendor: String
 )
 
 //  -----------------------------------------------------------------
