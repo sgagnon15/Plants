@@ -154,7 +154,6 @@ data class StockTransDto(
     @SerialName("location") val location: String,
     @SerialName("position") val position: String,
     @SerialName("transqty") val transQty: Int,
-    @SerialName("uomcode") val uomCode: String
 )
 
 @Serializable

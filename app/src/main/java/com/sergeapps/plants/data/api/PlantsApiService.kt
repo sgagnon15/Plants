@@ -139,12 +139,6 @@ interface PlantsApiService {
         @Body body: StockUpsertRequest
     ): StockCreateResponseDto
 
-    @POST("stocktrans")
-    suspend fun postStockTrans(
-        @Query("stockid") stockId: Int,
-        @Body body: StockTransDto
-    )
-
     @DELETE("stock")
     suspend fun deleteStock(
         @Query("id") stockId: Int

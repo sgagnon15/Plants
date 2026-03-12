@@ -58,9 +58,6 @@ data class ItemDetailUiState(
     val commonnameText: String = "",
     val cultivarText: String = "",
     val originText: String = "",
-    val uomText: String = "",
-    val barcodeText: String = "",
-    val modelNumText: String = "",
     val vendorUrlText: String = "",
     val creationDateText: String = "",
 
@@ -132,7 +129,6 @@ class ItemDetailViewModel(app: Application) : AndroidViewModel(app) {
                     botanicalvarText = "",
                     quantity = 0.0,
                     commonnameText = "",
-                    uomText = "",
                     vendorText = "",
                     wikiText = ""
                 )
@@ -272,10 +268,6 @@ class ItemDetailViewModel(app: Application) : AndroidViewModel(app) {
         refreshVendorOptions(text)
     }
 
-    fun onModelNumChanged(value: String) {
-        uiState.update { it.copy(modelNumText = value) }
-    }
-
     private fun refreshVendorOptions(text: String) {
         viewModelScope.launch {
             uiState.value = uiState.value.copy(isVendorLoading = true)
@@ -360,10 +352,6 @@ class ItemDetailViewModel(app: Application) : AndroidViewModel(app) {
         uiState.update { it.copy(botanicalvarText = value) }
     }
 
-    fun onUomChanged(value: String) {
-        uiState.update { it.copy(uomText = value) }
-    }
-
     suspend fun save(): Comparable<Nothing> {
 
         uiState.update {
@@ -386,8 +374,6 @@ class ItemDetailViewModel(app: Application) : AndroidViewModel(app) {
                 .ifBlank { throw IllegalArgumentException("Description requise") }
 
             val vendor = currentState.vendorText.trim()
-            val uom = currentState.uomText.trim()
-            val barcode = currentState.barcodeText.trim().ifBlank { null }
             val vendorUrl = currentState.vendorUrlText.trim().ifBlank { null }
 
             val createdOrUpdatedId = if (currentState.isNewItem) {
@@ -458,10 +444,6 @@ class ItemDetailViewModel(app: Application) : AndroidViewModel(app) {
         }
 
         return result
-    }
-
-    fun onBarcodeChanged(value: String) {
-        uiState.update { it.copy(barcodeText = value) }
     }
 
     fun onVendorUrlChanged(value: String) {

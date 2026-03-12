@@ -108,6 +108,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.Photo
 import androidx.compose.material3.OutlinedTextField
@@ -189,7 +190,7 @@ fun ItemDetailScreen(
                 title = { Text(if (state.isNewItem) "Nouvel article" else "Article") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Retour")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Retour")   // ICI ArrowBack replaced
                     }
                 },
                 actions = {
@@ -445,8 +446,7 @@ private fun parseQuantityToDouble(
 
 @Composable
 private fun TotalInventoryCard(
-    quantity: Double?,
-    uom: String?
+    quantity: Double?
 ) {
     Card(
         shape = RoundedCornerShape(16.dp),
@@ -471,10 +471,6 @@ private fun TotalInventoryCard(
                     text = buildString {
                         if (quantity != null) {
                             append(formatQuantity(quantity))
-                            if (!uom.isNullOrBlank()) {
-                                append(" ")
-                                append(uom)
-                            }
                         } else {
                             append("—")
                         }
@@ -1271,7 +1267,7 @@ private fun TotalInventoryCardDropdown(
                         val left = buildString {
                             append(row.location)
                             if (!row.position.isNullOrBlank()) {
-                                append(" / Casier ")
+                                append(" / ")
                                 append(row.position)
                             }
                         }
@@ -1385,85 +1381,6 @@ private fun DetailRowEditable(
                 innerTextField()
             }
         )
-    }
-}
-
-private class ZxingScanContract :
-    ActivityResultContract<ZxingScanRequest, String?>() {
-
-    override fun createIntent(context: Context, input: ZxingScanRequest): Intent {
-        val integrator = IntentIntegrator(input.activity)
-            .setPrompt(input.prompt)
-            .setBeepEnabled(true)
-            .setOrientationLocked(false)
-            .setBarcodeImageEnabled(false)
-
-        if (input.formats.isNotEmpty()) {
-            integrator.setDesiredBarcodeFormats(input.formats)
-        }
-
-        return integrator.createScanIntent()
-    }
-
-    override fun parseResult(resultCode: Int, intent: Intent?): String? {
-        val result = IntentIntegrator.parseActivityResult(resultCode, intent)
-        return result?.contents
-    }
-}
-
-private data class ZxingScanRequest(
-    val activity: Activity,
-    val formats: Collection<String>,
-    val prompt: String
-)
-
-@Composable
-private fun ScanTextRow(
-    label: String,
-    value: String,
-    onValueChange: (String) -> Unit,
-    iconContentDescription: String,
-    onScanClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.width(120.dp)
-        )
-
-        Row(
-            modifier = Modifier.weight(1f),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            BasicTextField(
-                value = value,
-                onValueChange = onValueChange,
-                singleLine = true,
-                textStyle = MaterialTheme.typography.bodySmall.copy(
-                    color = MaterialTheme.colorScheme.onSurface
-                ),
-                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(vertical = 2.dp)
-            )
-
-            IconButton(
-                onClick = onScanClick,
-                modifier = Modifier.size(18.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.PhotoCamera,
-                    contentDescription = iconContentDescription
-                )
-            }
-        }
     }
 }
 
