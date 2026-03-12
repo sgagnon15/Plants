@@ -120,7 +120,7 @@ fun InventoryDetailScreen(
                             }
                             isEditing = !isEditing
                         },
-                        enabled = state.detail != null && state.error == null
+                        enabled = state.error == null
                     ) {
                         Icon(
                             imageVector = if (isEditing) Icons.Filled.Check else Icons.Filled.Edit,
@@ -227,7 +227,8 @@ fun InventoryDetailScreen(
                     ) {
                         detail?.botanicalvar?.let { Text(it, style = MaterialTheme.typography.titleMedium) }
                         Text(
-                            text = "No. spécimen: ${detail?.specimenNumber}",
+                            text = "No. spécimen: " +
+                                    if (detail != null) detail.specimenNumber.orEmpty() else state.specimenNumberText,
                             color = MaterialTheme.colorScheme.primary,
                             style = MaterialTheme.typography.bodyMedium,
                             modifier = Modifier
@@ -308,6 +309,13 @@ fun InventoryDetailScreen(
                         modifier = Modifier.padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
+                        PropertyRow(
+                            label = "No. variété",
+                            value = state.initialItemNumber,
+                            valueType = "text",
+                            onChange = viewModel::onVendorChanged
+                        )
+
                         PropertyRow(
                             label = "Fournisseur",
                             value = state.vendorText,

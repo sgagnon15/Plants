@@ -90,6 +90,9 @@ interface PlantsApiService {
     // Inventory
     //  -----------------------------------------------------------------
 
+    @GET("nextSpecimen")
+    suspend fun getNextSpecimen(): NextSpecimenDto
+
     @GET("location")
     suspend fun getLocations(): List<LocationDto>
 

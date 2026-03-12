@@ -64,18 +64,62 @@ class InventoryDetailViewModel(app: Application) : AndroidViewModel(app) {
     private var repository: PlantsRepository? = null
 
     fun load(stockId: Int, initialItemNumber: String = "") {
+
         viewModelScope.launch {
+
+            uiState.update {
+                it.copy(
+                    isLoading = true,
+                    error = null
+                )
+            }
+
             try {
-                uiState.update { it.copy(isLoading = true, error = null) }
 
                 val settings = settingsStore.settingsFlow.first()
+
                 val api = PlantsApiFactory.create(settings)
+
                 repository = PlantsRepository(api)
 
-                val repo = PlantsRepository(api)
-                val detail = repo.loadStockDetail(stockId = stockId, itemNumber = initialItemNumber)
+                val repo = repository ?: return@launch
+
+
+                // MODE AJOUT
+                if (stockId == 0) {
+
+                    val nextSpecimen = repository?.getNextSpecimen()?.toString().orEmpty()
+
+                    uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            detail = null,
+                            initialItemNumber = initialItemNumber,
+                            editLocation = "",
+                            editposition = "",
+                            specimenNumberText = nextSpecimen,
+                            vendorText = "",
+                            purchaseDateText = "",
+                            lastTransplantText = "",
+                            lastDivisionText = "",
+                            lastFeedingText = "",
+                            purchasePriceText = String.format(Locale.getDefault(), "%.2f $", 0.0),
+                            error = null
+                        )
+                    }
+
+                    loadLocations()
+                    return@launch
+                }
+
+                // MODE MODIFICATION
+                val detail = repo.loadStockDetail(
+                    stockId = stockId,
+                    itemNumber = initialItemNumber
+                )
 
                 uiState.update {
+
                     it.copy(
                         isLoading = false,
                         detail = detail,
@@ -89,14 +133,18 @@ class InventoryDetailViewModel(app: Application) : AndroidViewModel(app) {
                         lastDivisionText = detail.lastDivision.orEmpty(),
                         lastFeedingText = detail.lastFeeding.orEmpty(),
                         purchasePriceText =
-                            detail.purchasePrice?.let { "%.2f $".format(Locale.getDefault(), it) } ?: "",
-                        error = null
+                        detail.purchasePrice?.let {
+                            "%.2f $".format(Locale.getDefault(), it)
+                        } ?: ""
                     )
                 }
 
                 loadLocations()
+
             } catch (e: Exception) {
+
                 uiState.update {
+
                     it.copy(
                         isLoading = false,
                         error = e.message ?: "Erreur chargement détail"
@@ -105,7 +153,6 @@ class InventoryDetailViewModel(app: Application) : AndroidViewModel(app) {
             }
         }
     }
-
 
     fun startEditing() {
         val detail = uiState.value.detail ?: return
@@ -122,72 +169,94 @@ class InventoryDetailViewModel(app: Application) : AndroidViewModel(app) {
 
     fun saveChanges() {
         val current = uiState.value
-
         val newLocation = current.editLocation.trim()
-        val newposition = current.editposition.trim()
+        val newPosition = current.editposition.trim()
 
         if (newLocation.isBlank()) {
-            uiState.value = current.copy(error = "Emplacement invalide")
+            uiState.update { it.copy(error = "Emplacement invalide") }
             return
         }
 
-        if (newposition.isBlank()) {
-            uiState.value = current.copy(error = "position invalide")
+        if (newPosition.isBlank()) {
+            uiState.update { it.copy(error = "Position invalide") }
             return
         }
 
-        val isNewStock = (current.detail == null)
+        val isNewStock = current.detail == null
+
         val itemNumberToSave =
-            if (isNewStock) current.initialItemNumber else current.detail!!.itemNumber
-        val stockIdToSave = if (isNewStock) 0 else current.detail!!.stockId
+            if (isNewStock)
+                current.initialItemNumber
+            else
+                current.detail!!.itemNumber
 
-        if (isNewStock) {
-            uiState.value = current.copy(error = "No. article invalide")
-            return
-        }
+        val stockIdToSave =
+            if (isNewStock)
+                0
+            else
+                current.detail!!.stockId
 
         viewModelScope.launch {
             try {
-                uiState.value = current.copy(isSaving = true, error = null)
+                uiState.update {
+                    it.copy(
+                        isSaving = true,
+                        error = null
+                    )
+                }
 
                 val settings = settingsStore.settingsFlow.first()
                 val api = PlantsApiFactory.create(settings)
                 val repo = PlantsRepository(api)
-
-                val purchasePriceValue = current.purchasePriceText
-                    .replace("$", "")
-                    .replace(",", ".")
-                    .toDoubleOrNull()
-
+                val purchasePriceValue =
+                    current.purchasePriceText
+                        .replace("$", "")
+                        .replace(",", ".")
+                        .toDoubleOrNull()
                 val body = StockUpsertRequest(
-                    itemNumber      = itemNumberToSave,
-                    specimenNumber  = current.specimenNumberText,
-                    location        = newLocation,
-                    position        = newposition,
-                    purchaseDate    = current.purchaseDateText,
-                    purchasePrice   = purchasePriceValue.toString(),
-                    lastTransplant  = current.lastTransplantText,
-                    lastDivision    = current.lastDivisionText,
-                    lastFeeding     = current.lastFeedingText
+                    itemNumber = itemNumberToSave,
+                    specimenNumber = current.specimenNumberText,
+                    location = newLocation,
+                    position = newPosition,
+                    purchaseDate = current.purchaseDateText,
+                    purchasePrice = purchasePriceValue.toString(),
+                    lastTransplant = current.lastTransplantText,
+                    lastDivision = current.lastDivisionText,
+                    lastFeeding = current.lastFeedingText
                 )
 
-                val returnedStockId = repo.upsertStock(stockId = stockIdToSave, body = body)
-                val finalStockId = if (returnedStockId > 0) returnedStockId else stockIdToSave
-                val refreshed = repo.loadStockDetail(finalStockId, itemNumberToSave)
+                val returnedStockId =
+                    repo.upsertStock(
+                        stockId = stockIdToSave,
+                        body = body
+                    )
+                val finalStockId =
+                    if (returnedStockId > 0)
+                        returnedStockId
+                    else
+                        stockIdToSave
+                val refreshed =
+                    repo.loadStockDetail(
+                        finalStockId,
+                        itemNumberToSave
+                    )
 
-                uiState.value = current.copy(
-                    isSaving = false,
-                    detail = refreshed,
-                    initialItemNumber = refreshed.itemNumber,
-                    editLocation = refreshed.location.orEmpty(),
-                    editposition = refreshed.position.orEmpty(),
-                    error = null
-                )
+                uiState.update {
+                    it.copy(
+                        isSaving = false,
+                        detail = refreshed,
+                        initialItemNumber = refreshed.itemNumber,
+                        editLocation = refreshed.location.orEmpty(),
+                        editposition = refreshed.position.orEmpty()
+                    )
+                }
             } catch (e: Exception) {
-                uiState.value = current.copy(
-                    isSaving = false,
-                    error = e.message ?: "Erreur sauvegarde"
-                )
+                uiState.update {
+                    it.copy(
+                        isSaving = false,
+                        error = e.message ?: "Erreur sauvegarde"
+                    )
+                }
             }
         }
     }

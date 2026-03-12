@@ -276,5 +276,9 @@ class PlantsRepository(
             Result.failure(exception)
         }
     }
+
+    suspend fun getNextSpecimen(): Int {
+        return api.getNextSpecimen().nextSpecimen
+    }
 }
 

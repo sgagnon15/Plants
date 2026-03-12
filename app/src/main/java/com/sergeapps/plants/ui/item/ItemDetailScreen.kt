@@ -422,7 +422,7 @@ fun ItemDetailScreen(
                                 totalQuantity = state.quantity.toDouble(),
                                 rows = state.inventoryByLocation,
                                 onRowSelected = { selected -> onOpenInventoryDetail(selected.stockId) },
-                                itemNumber = ((state.itemDetail?.itemNumber ?: state.itemNumberText.toString() ?: itemId).toString()),
+                                itemNumber = state.itemDetail?.itemNumber ?: state.itemNumberText,
                                 onAddToInventory = onAddToInventory
                             )
                         }

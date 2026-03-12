@@ -97,6 +97,11 @@ data class ItemListDto(
 //  -----------------------------------------------------------------
 
 @Serializable
+data class NextSpecimenDto(
+    @SerialName("nextSpecimen") val nextSpecimen: Int
+)
+
+@Serializable
 data class StockListRowDto(
     @SerialName("pagenumber")       val pagenumber: Int,
     @SerialName("itemnumber")       val itemNumber: String,
@@ -138,11 +143,11 @@ data class StockUpsertRequest(
     @SerialName("specimennumber") val specimenNumber: String? = null,
     @SerialName("location")       val location: String,
     @SerialName("position")       val position: String,
-    @SerialName("purchaseDate")   val purchaseDate: String,
-    @SerialName("purchasePrice")  val purchasePrice: String,
-    @SerialName("lastTransplant") val lastTransplant: String,
-    @SerialName("lastDivision")   val lastDivision: String,
-    @SerialName("lastFeeding")    val lastFeeding: String
+    @SerialName("purchaseDate")   val purchaseDate: String? = null,
+    @SerialName("purchasePrice")  val purchasePrice: String? = null,
+    @SerialName("lastTransplant") val lastTransplant: String? = null,
+    @SerialName("lastDivision")   val lastDivision: String? = null,
+    @SerialName("lastFeeding")    val lastFeeding: String? = null
 )
 
 @Serializable

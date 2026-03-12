@@ -67,24 +67,28 @@ fun plantsApp() {
         }
 
         composable(
-            "${Routes.InventoryDetail}/{stockId}?itemNumber={itemNumber}",
+            route = "${Routes.InventoryDetail}/{stockId}?itemNumber={itemNumber}",
             arguments = listOf(
-                navArgument("stockId") { type = NavType.IntType },
-                navArgument("itemNumber") {
+                navArgument("stockId") {
                     type = NavType.IntType
-                    defaultValue = 0
+                },
+                navArgument("itemNumber") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = ""
                 }
             )
         ) { backStackEntry ->
+
             val stockId = backStackEntry.arguments?.getInt("stockId") ?: 0
-            val itemNumber = backStackEntry.arguments?.getString("itemNumber") ?: ""
+            val itemNumber = backStackEntry.arguments?.getString("itemNumber").orEmpty()
 
             InventoryDetailScreen(
                 stockId = stockId,
                 initialItemNumber = itemNumber,
                 onBack = { navController.popBackStack() },
                 onOpenItemDetail = { itemId ->
-                    navController.navigate(Routes.itemDetail(itemId))
+                    navController.navigate("${Routes.ItemDetail}/$itemId")
                 }
             )
         }
