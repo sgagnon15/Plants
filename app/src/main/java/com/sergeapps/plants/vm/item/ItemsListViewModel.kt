@@ -22,7 +22,7 @@ data class ItemsListUiState(
     val error: String? = null,
     val filter: String = "",
     val page: Int = 1,
-    val pictureRotation: Int = 0,
+    val pictureRotation: Int = 90,
     val totalPages: Int = 1,
     val items: List<ItemRowUi> = emptyList(),
     val isInitialLoading: Boolean = false,
