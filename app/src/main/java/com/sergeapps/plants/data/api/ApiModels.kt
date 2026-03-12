@@ -184,7 +184,8 @@ data class LocationDto(
 @Serializable
 data class CreateLocationBody(
     @SerialName("location") val location: String,
-    @SerialName("nbbin") val nbBin: Int
+    @SerialName("nbbin") val nbBin: Int,
+    @SerialName("type") val type: String? = null
 )
 
 @Serializable

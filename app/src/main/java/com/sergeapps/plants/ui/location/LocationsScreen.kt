@@ -237,7 +237,14 @@ fun LocationsScreen(
                     OutlinedTextField(
                         value = state.newNbBinText,
                         onValueChange = viewModel::onNewNbBinChanged,
-                        label = { Text("Nb casiers (nbbin)") },
+                        label = { Text("Nb positions") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = state.newTypeText,
+                        onValueChange = viewModel::onNewTypeChanged,
+                        label = { Text("Type") },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )

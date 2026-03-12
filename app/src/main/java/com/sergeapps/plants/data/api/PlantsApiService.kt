@@ -136,7 +136,7 @@ interface PlantsApiService {
 
     @POST("location")
     suspend fun createLocation(
-        @Query("location") locationQuery: String,
+        @Query("id") id: Int,
         @Body body: CreateLocationBody
     )
 

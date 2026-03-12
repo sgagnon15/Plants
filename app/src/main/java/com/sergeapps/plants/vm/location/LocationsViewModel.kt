@@ -19,19 +19,21 @@ import kotlinx.coroutines.coroutineScope
 
 data class LocationsUiState(
     val isLoading: Boolean = false,
-    val error: String? = null,
-    val locations: List<LocationDto> = emptyList(),
     val isAddDialogOpen: Boolean = false,
+    val isEditDialogOpen: Boolean = false,
+    val isDeleteConfirmOpen: Boolean = false,
+    val error: String? = null,
+
+    val locations: List<LocationDto> = emptyList(),
     val newLocationText: String = "",
     val newNbBinText: String = "1",
-    val isEditDialogOpen: Boolean = false,
+    val newTypeText: String = "",
     val editId: Int? = null,
     val editLocationText: String = "",
     val editNbBinText: String = "",
     val editTypeText: String = "",
     val usageCountById: Map<Int, Int> = emptyMap(),
     val isUsageLoading: Boolean = false,
-    val isDeleteConfirmOpen: Boolean = false,
     val deleteCandidateId: Int? = null,
     val deleteCandidateName: String = ""
 )
@@ -67,14 +69,16 @@ class LocationsViewModel(
 
     fun onNewLocationChanged(value: String) = uiState.update { it.copy(newLocationText = value) }
     fun onNewNbBinChanged(value: String) = uiState.update { it.copy(newNbBinText = value) }
+    fun onNewTypeChanged(value: String) = uiState.update { it.copy(newTypeText = value) }
 
     fun createLocation() {
         viewModelScope.launch {
             val location = state.value.newLocationText.trim()
-            val nbBin = state.value.newNbBinText.trim().toIntOrNull() ?: 0
+            val nbBin    = state.value.newNbBinText.trim().toIntOrNull() ?: 0
+            val type     = state.value.newTypeText.trim()
 
             if (location.isBlank() || nbBin <= 0) {
-                uiState.update { it.copy(error = "Location et nbbin obligatoires") }
+                uiState.update { it.copy(error = "Emplacement et position obligatoires") }
                 return@launch
             }
 
@@ -84,7 +88,7 @@ class LocationsViewModel(
                 val settings = settingsStore.settingsFlow.first()
                 val api = PlantsApiFactory.create(settings)
                 val repository = PlantsRepository(api)
-                repository.createLocation(location = location, nbBin = nbBin)
+                repository.createLocation(id = 0, location = location, nbBin = nbBin, type = type)
             }.onSuccess {
                 uiState.update {
                     it.copy(

@@ -171,9 +171,22 @@ class PlantsRepository(
         return api.getLocations()
     }
 
-    suspend fun createLocation(location: String, nbBin: Int) {
-        val body = CreateLocationBody(location = location, nbBin = nbBin)
-        return api.createLocation(locationQuery = location, body = body)
+    suspend fun createLocation(
+        id: Int,
+        location: String,
+        nbBin: Int,
+        type: String
+    ) {
+        val body = CreateLocationBody(
+            location = location,
+            nbBin = nbBin,
+            type = type
+        )
+
+        return api.createLocation(
+            id = id,
+            body = body
+        )
     }
 
     suspend fun updateLocation(id: Int, location: String, nbBin: Int, type: String) {
