@@ -310,13 +310,6 @@ fun InventoryDetailScreen(
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         PropertyRow(
-                            label = "No. variété",
-                            value = state.initialItemNumber,
-                            valueType = "text",
-                            onChange = viewModel::onVendorChanged
-                        )
-
-                        PropertyRow(
                             label = "Fournisseur",
                             value = state.vendorText,
                             valueType = "text",
