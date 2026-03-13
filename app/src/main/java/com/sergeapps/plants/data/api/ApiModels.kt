@@ -205,3 +205,48 @@ data class VendorDto(
 data class WhereUsedDto(
     @SerialName("occurence") val occurrence: Int
 )
+
+//  -----------------------------------------------------------------
+// Controller
+//  -----------------------------------------------------------------
+
+@Serializable
+data class ControlInfoDto(
+    @SerialName("ipAddress")        val ipAddress: String,
+    @SerialName("port")             val port: Int,
+    @SerialName("prgVersion")       val prgVersion: String,
+    @SerialName("freeMemory")       val freeMemory: String,
+    @SerialName("runningSince")     val runningSince: String,
+    @SerialName("updateFreq")       val updateFreq: Double,
+    @SerialName("signalStrength")   val signalStrength: Int,
+    @SerialName("wifiLevel")        val wifiLevel: String,
+    @SerialName("deviceName")       val deviceName: String,
+    @SerialName("autoWatering")     val autoWatering: String,
+    @SerialName("manualWatering")   val manualWatering: String
+)
+
+@Serializable
+data class GenParamDto(
+    @SerialName("id")                   val id: Int,
+    @SerialName("wateringStartHour")    val wateringStartHour: Int,
+    @SerialName("wateringStartMin")     val wateringStartMin: Int,
+    @SerialName("wateringDuration")     val wateringDuration: Int,
+    @SerialName("updatefreq")           val updatefreq: Int,
+    @SerialName("manualDuration")       val manualDuration: Int,
+    @SerialName("IPAddress")            val IPAddress: String,
+    @SerialName("feeding")              val feeding: String,
+    @SerialName("feedDuration")         val feedDuration: String,
+    @SerialName("timestamp")            val timestamp: Double,
+    @SerialName("macaddress")           val macaddress: Int
+)
+
+@Serializable
+data class ControllerListDto(
+    @SerialName("id")               val id: Int,
+    @SerialName("controlername")    val controlername: Int,
+    @SerialName("macaddress")       val macaddress: Int,
+    @SerialName("IPAddress")        val IPAddress: String,
+    @SerialName("updatefreq")       val updatefreq: Int,
+    @SerialName("manualDuration")   val manualDuration: Int,
+    @SerialName("rowstamp")         val rowstamp: Double
+)
