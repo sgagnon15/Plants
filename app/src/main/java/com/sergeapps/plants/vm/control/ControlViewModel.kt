@@ -3,14 +3,13 @@ package com.sergeapps.plants.vm.control
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.sergeapps.plants.data.PlantsRepository
-import com.sergeapps.plants.data.PlantsSettings
 import com.sergeapps.plants.data.PlantsSettingsStore
 import com.sergeapps.plants.data.api.PlantsApiFactory
-import com.sergeapps.plants.vm.inventory.InventoryDetailUiState
+import com.sergeapps.plants.data.api.PlantsApiService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -37,10 +36,12 @@ data class GeneralParamsUi(
 )
 
 data class ControlUiState(
-    val zone: String = "",
-    val availableZones: List<String> = emptyList(),
-    val currentStatus: String = "Arrosage en cours",
-    val waterFlow: String = "0.00",
+    val controllerName: String = "",
+    val macAddress: String = "",
+    val zone: String = "Zone 1",
+    val availableZones: List<String> = listOf("Zone 1", "Zone 2", "Zone 3"),
+    val currentStatus: String = "",
+    val waterFlow: String = "0",
     val scheduleRows: List<ScheduleRowUi> = emptyList(),
     val historyRows: List<HistoryRowUi> = emptyList(),
     val generalParams: GeneralParamsUi = GeneralParamsUi(),
@@ -49,37 +50,29 @@ data class ControlUiState(
 )
 
 class ControlViewModel(app: Application) : AndroidViewModel(app) {
+
     private val settingsStore = PlantsSettingsStore(app)
-    private var repository: PlantsRepository? = null
+    private var api: PlantsApiService? = null
 
-
-    private val uiState = MutableStateFlow(
-        ControlUiState(
-            zone = "Zone 1",
-            availableZones = listOf("Zone 1", "Zone 2", "Zone 3"),
-            scheduleRows = listOf(
-                ScheduleRowUi(id = 1, startTime = "08:00", duration = "30", fertilizer = false),
-                ScheduleRowUi(id = 2, startTime = "18:00", duration = "20", fertilizer = true)
-            ),
-            historyRows = listOf(
-                HistoryRowUi(date = "2026-03-12", state = "Arrosage", flow = "120 ml"),
-                HistoryRowUi(date = "2026-03-11", state = "Fertilisation", flow = "50 ml"),
-                HistoryRowUi(date = "2026-03-10", state = "Arrosage", flow = "110 ml")
-            ),
-            generalParams = GeneralParamsUi(
-                autoStart = "07:00",
-                waterDuration = "30 sec",
-                manualDuration = "20 sec",
-                feedEnabled = true,
-                feedDuration = "10 sec",
-                updateFrequency = "15 min"
-            )
-        )
-    )
+    private val uiState = MutableStateFlow(ControlUiState())
     val state: StateFlow<ControlUiState> = uiState.asStateFlow()
 
     init {
-        loadControlData()
+        viewModelScope.launch {
+            try {
+                val settings = settingsStore.settingsFlow.first()
+
+                api = PlantsApiFactory.create(settings)
+                loadControlData()
+            } catch (exception: Exception) {
+                uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = exception.message ?: "Erreur d'initialisation"
+                    )
+                }
+            }
+        }
     }
 
     fun loadControlData() {
@@ -92,25 +85,68 @@ class ControlViewModel(app: Application) : AndroidViewModel(app) {
             }
 
             try {
-                // TODO:
-                // Remplacer ce bloc par les appels réels repository/api
-                //
-                // Exemple futur :
-                // val controlDto = repository.getControlData()
-                // uiState.update { old ->
-                //     old.copy(
-                //         zone = controlDto.zone,
-                //         availableZones = controlDto.availableZones,
-                //         currentStatus = controlDto.currentStatus,
-                //         waterFlow = controlDto.waterFlow,
-                //         scheduleRows = controlDto.scheduleRows.map { ... },
-                //         historyRows = controlDto.historyRows.map { ... },
-                //         generalParams = ...
-                //     )
-                // }
+                val service = api ?: throw IllegalStateException("API non initialisée")
+
+                val controllers = service.getControllerList()
+                val controller = controllers.firstOrNull()
+                    ?: throw IllegalStateException("Aucun contrôleur trouvé")
+
+                val controllerName = controller.controlername.toString()
+                val macAddress = controller.macaddress.toString()
+
+                val infoList = service.getInfo(macAddress)
+                val info = infoList.firstOrNull()
+
+                val chrono = service.getChrono(macAddress)
+                val genParam = service.getGenParam(controllerName)
+                val schedules = service.getScheduleList(
+                    macAddress = macAddress,
+                    zone = uiState.value.zone
+                )
+
+                val autoStart = "%02d:%02d".format(
+                    genParam.wateringStartHour,
+                    genParam.wateringStartMin
+                )
 
                 uiState.update {
-                    it.copy(isLoading = false)
+                    it.copy(
+                        controllerName = controllerName,
+                        macAddress = macAddress,
+                        currentStatus = if (chrono.remain > 0) {
+                            "Arrosage en cours"
+                        } else {
+                            "Arrêt"
+                        },
+                        waterFlow = chrono.waterFlow.toString(),
+                        scheduleRows = schedules.map { schedule ->
+                            ScheduleRowUi(
+                                id = schedule.id,
+                                startTime = schedule.starttime,
+                                duration = schedule.duration.toString(),
+                                fertilizer = false
+                            )
+                        },
+                        generalParams = GeneralParamsUi(
+                            autoStart = autoStart,
+                            waterDuration = genParam.wateringDuration.toString(),
+                            manualDuration = genParam.manualDuration.toString(),
+                            feedEnabled =
+                            genParam.feeding == "1" ||
+                                    genParam.feeding.equals("true", ignoreCase = true) ||
+                                    genParam.feeding.equals("oui", ignoreCase = true),
+                            feedDuration = genParam.feedDuration,
+                            updateFrequency = genParam.updatefreq.toString()
+                        ),
+                        historyRows = listOf(
+                            HistoryRowUi(
+                                date = info?.runningSince ?: "",
+                                state = info?.autoWatering ?: "",
+                                flow = chrono.waterFlow.toString()
+                            )
+                        ),
+                        isLoading = false
+                    )
                 }
             } catch (exception: Exception) {
                 uiState.update {
@@ -124,9 +160,8 @@ class ControlViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun onZoneChange(zone: String) {
-        uiState.update {
-            it.copy(zone = zone)
-        }
+        uiState.update { it.copy(zone = zone) }
+        loadControlData()
     }
 
     fun addScheduleRow() {
@@ -145,11 +180,7 @@ class ControlViewModel(app: Application) : AndroidViewModel(app) {
         uiState.update { currentState ->
             currentState.copy(
                 scheduleRows = currentState.scheduleRows.map { row ->
-                    if (row.id == rowId) {
-                        updatedRow
-                    } else {
-                        row
-                    }
+                    if (row.id == rowId) updatedRow else row
                 }
             )
         }
@@ -164,41 +195,20 @@ class ControlViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun onWaterClick() {
-        viewModelScope.launch {
-            // TODO brancher appel backend arrosage manuel
-            uiState.update {
-                it.copy(currentStatus = "Arrosage manuel")
-            }
+        uiState.update {
+            it.copy(currentStatus = "Arrosage manuel")
         }
     }
 
     fun onFeedClick() {
-        viewModelScope.launch {
-            // TODO brancher appel backend fertilisation
-            uiState.update {
-                it.copy(currentStatus = "Fertilisation")
-            }
+        uiState.update {
+            it.copy(currentStatus = "Fertilisation")
         }
     }
 
     fun onSearchHistory() {
-        viewModelScope.launch {
-            // TODO brancher recherche historique
-        }
     }
 
     fun saveAll() {
-        viewModelScope.launch {
-            try {
-                // TODO envoyer au backend :
-                // zone
-                // scheduleRows
-                // generalParams
-            } catch (exception: Exception) {
-                uiState.update {
-                    it.copy(errorMessage = exception.message ?: "Erreur de sauvegarde")
-                }
-            }
-        }
     }
 }

@@ -54,6 +54,8 @@ import com.sergeapps.plants.vm.control.ControlUiState
 import com.sergeapps.plants.vm.control.GeneralParamsUi
 import com.sergeapps.plants.vm.control.HistoryRowUi
 import com.sergeapps.plants.vm.control.ScheduleRowUi
+import androidx.compose.material3.CircularProgressIndicator
+
 
 private val SectionBlue = Color(0xFF00A9E8)
 private val DarkBg = Color.Black
@@ -182,6 +184,17 @@ fun ControlScreen(
             item {
                 Spacer(modifier = Modifier.height(24.dp))
             }
+        }
+        if (state.isLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = Color.White)
+            }
+            return@Scaffold
         }
     }
 }

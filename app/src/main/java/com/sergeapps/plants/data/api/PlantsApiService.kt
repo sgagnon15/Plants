@@ -191,8 +191,8 @@ interface PlantsApiService {
         @Query("controlername") controlername: String
     ): List<LogListDto>
 
-    @GET("log")
-    suspend fun getLog(
+    @GET("schedulelist")
+    suspend fun getScheduleList(
         @Query("macaddress") macAddress: String,
         @Query("zone") zone: String
     ): List<ScheduleListDto>
