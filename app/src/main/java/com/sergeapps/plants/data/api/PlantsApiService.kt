@@ -196,4 +196,11 @@ interface PlantsApiService {
         @Query("macaddress") macAddress: String,
         @Query("zone") zone: String
     ): List<ScheduleListDto>
+
+    @POST("water")
+    suspend fun setWater(
+        @Query("state") state: String,
+        @Query("duration") duration: Int,
+        @Query("macaddress") macAddress: String
+    )
 }

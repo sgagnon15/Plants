@@ -12,6 +12,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import com.sergeapps.plants.data.PlantsRepository
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 
 data class ScheduleRowUi(
     val id: Int,
@@ -47,7 +52,10 @@ data class ControlUiState(
     val historyRows: List<HistoryRowUi> = emptyList(),
     val generalParams: GeneralParamsUi = GeneralParamsUi(),
     val isLoading: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val statusText: String = "",
+    val waterFlowText: String = "",
+    val isWatering: Boolean = false
 )
 
 data class ControllerUi(
@@ -58,17 +66,19 @@ data class ControllerUi(
 class ControlViewModel(app: Application) : AndroidViewModel(app) {
 
     private val settingsStore = PlantsSettingsStore(app)
-    private var api: PlantsApiService? = null
-
+    private lateinit var api: PlantsApiService
     private val uiState = MutableStateFlow(ControlUiState())
+    private lateinit var repository: PlantsRepository
+    private var chronoPollingJob: Job? = null
+
     val state: StateFlow<ControlUiState> = uiState.asStateFlow()
 
     init {
         viewModelScope.launch {
             try {
                 val settings = settingsStore.settingsFlow.first()
-
                 api = PlantsApiFactory.create(settings)
+                repository = PlantsRepository(api)
                 loadInitialData()
             } catch (exception: Exception) {
                 uiState.update {
@@ -197,8 +207,35 @@ class ControlViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun onWaterClick() {
-        uiState.update {
-            it.copy(currentStatus = "Arrosage manuel")
+
+        val mac = uiState.value.selectedMacAddress
+        if (mac.isBlank()) return
+
+        viewModelScope.launch {
+
+            try {
+
+                repository.setWater(
+                    state = "on",
+                    duration = 10,
+                    macAddress = mac
+                )
+
+                uiState.update {
+                    it.copy(
+                        currentStatus = "Arrosage en cours"
+                    )
+                }
+
+                startChronoPolling()
+
+            } catch (e: Exception) {
+
+                android.util.Log.e(
+                    "ControlVM",
+                    "Water error: ${e.message}"
+                )
+            }
         }
     }
 
@@ -272,5 +309,66 @@ class ControlViewModel(app: Application) : AndroidViewModel(app) {
         }
 
         loadControlData()
+    }
+
+    private fun startChronoPolling() {
+
+        val macAddress = uiState.value.selectedMacAddress
+        if (macAddress.isBlank()) return
+
+        chronoPollingJob?.cancel()
+
+        chronoPollingJob = viewModelScope.launch {
+
+            while (isActive) {
+
+                try {
+
+                    val chrono = repository.getChrono(macAddress)
+
+                    val isRunning = chrono.remain > 0
+
+                    uiState.update { current ->
+                        current.copy(
+                            currentStatus = if (isRunning) {
+                                "Arrosage en cours"
+                            } else {
+                                "Arrêt"
+                            },
+                            waterFlow = chrono.waterFlow.toString(),
+                            isWatering = isRunning
+                        )
+                    }
+
+                    if (!isRunning) {
+                        stopChronoPolling()
+                        break
+                    }
+
+                } catch (error: Exception) {
+
+                    uiState.update {
+                        it.copy(
+                            currentStatus = "Erreur lecture",
+                            waterFlow = "0"
+                        )
+                    }
+
+                    stopChronoPolling()
+                    break
+                }
+
+                delay(1000)
+            }
+        }
+    }
+    private fun stopChronoPolling() {
+        chronoPollingJob?.cancel()
+        chronoPollingJob = null
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        stopChronoPolling()
     }
 }

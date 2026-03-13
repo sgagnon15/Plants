@@ -2,6 +2,7 @@ package com.sergeapps.plants.data
 
 import android.content.Context
 import android.net.Uri
+import com.sergeapps.plants.data.api.ChronoDto
 import com.sergeapps.plants.data.api.CreateLocationBody
 import com.sergeapps.plants.data.api.ItemDetailDto
 import com.sergeapps.plants.data.api.ItemListDto
@@ -329,6 +330,22 @@ class PlantsRepository(
             pageNumber = 1,
             nbItems = 9999
         )
+    }
+
+    suspend fun setWater(
+        state: String,
+        duration: Int,
+        macAddress: String
+    ) {
+        api.setWater(
+            state = state,
+            duration = duration,
+            macAddress = macAddress
+        )
+    }
+
+    suspend fun getChrono(macAddress: String): ChronoDto {
+        return api.getChrono(macAddress = macAddress)
     }
 }
 

@@ -109,6 +109,7 @@ fun ControlScreen(
                 item {
                     SectionCard(title = "Actions") {
                         ActionHeader(
+                            canSendAction = !state.selectedMacAddress.isNullOrBlank(),
                             onWaterClick = onWaterClick,
                             onFeedClick = onFeedClick
                         )
@@ -214,6 +215,7 @@ fun ControlScreen(
 
 @Composable
 private fun ActionHeader(
+    canSendAction: Boolean,
     onWaterClick: () -> Unit,
     onFeedClick: () -> Unit
 ) {
@@ -224,6 +226,7 @@ private fun ActionHeader(
     ) {
         IconButton(
             onClick = onWaterClick,
+            enabled = canSendAction,
             modifier = Modifier.size(72.dp)
         ) {
             Text("💧", fontSize = 34.sp)
@@ -233,12 +236,14 @@ private fun ActionHeader(
 
         IconButton(
             onClick = onFeedClick,
+            enabled = canSendAction,
             modifier = Modifier.size(72.dp)
         ) {
             Text("🪴", fontSize = 30.sp)
         }
     }
 }
+
 
 @Composable
 private fun ManualStatusRow(
