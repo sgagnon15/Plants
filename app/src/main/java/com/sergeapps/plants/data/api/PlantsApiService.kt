@@ -169,7 +169,7 @@ interface PlantsApiService {
     @GET("info")
     suspend fun getInfo(
         @Query("macaddress") macAddress: String
-    ): List<ControlInfoDto>
+    ): ControlInfoDto
 
     @GET("chrono")
     suspend fun getChrono(

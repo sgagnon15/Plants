@@ -1,6 +1,5 @@
 package com.sergeapps.plants
 
-import android.service.controls.Control
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -124,6 +123,7 @@ fun plantsApp() {
             ControlScreen(
                 state = state,
                 onBack = { navController.popBackStack() },
+                onControllerChange = controlViewModel::onControllerChange,
                 onZoneChange = controlViewModel::onZoneChange,
                 onAddSchedule = controlViewModel::addScheduleRow,
                 onDeleteSchedule = controlViewModel::deleteScheduleRow,

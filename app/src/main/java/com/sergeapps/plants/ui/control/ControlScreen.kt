@@ -72,7 +72,8 @@ fun ControlScreen(
     onScheduleChange: (Int, ScheduleRowUi) -> Unit,
     onSearchHistory: () -> Unit,
     onWaterClick: () -> Unit = {},
-    onFeedClick: () -> Unit = {}
+    onFeedClick: () -> Unit = {},
+    onControllerChange: (String) -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -98,6 +99,16 @@ fun ControlScreen(
                     .padding(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                item {
+                    SectionCard(title = "Contrôleur") {
+                        ControllerSelectorRow(
+                            selectedController = state.selectedControllerName,
+                            availableControllers = state.availableControllers.map { it.controllerName },
+                            onControllerChange = onControllerChange
+                        )
+                    }
+                }
+
                 item {
                     SectionCard(title = "Actions") {
                         ActionHeader(
@@ -436,10 +447,10 @@ private fun GeneralParamsContent(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         ParamRow("Départ arrosage auto", params.autoStart)
-        ParamRow("Durée d'arrosage", params.waterDuration)
-        ParamRow("Durée arrosage manuel", params.manualDuration)
+        ParamRow("Durée d'arrosage", params.waterDuration.toString())
+        ParamRow("Durée arrosage manuel", params.manualDuration.toString())
         ParamRow("Fertilisation", if (params.feedEnabled) "Oui" else "Non")
-        ParamRow("Durée fertilisation", params.feedDuration)
+        ParamRow("Durée fertilisation", params.feedDuration.toString())
         ParamRow("Fréquence MAJ", params.updateFrequency)
     }
 }
@@ -553,3 +564,101 @@ private fun SectionCard(
         }
     }
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ControllerSelectorRow(
+    selectedController: String,
+    availableControllers: List<String>,
+    onControllerChange: (String) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded },
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        OutlinedTextField(
+            value = selectedController,
+            onValueChange = {},
+            readOnly = true,
+            singleLine = true,
+            enabled = availableControllers.isNotEmpty(),
+            modifier = Modifier
+                .menuAnchor()
+                .fillMaxWidth(),
+            textStyle = MaterialTheme.typography.bodyMedium,
+            trailingIcon = {
+                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+            }
+        )
+
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            availableControllers.forEach { item ->
+                DropdownMenuItem(
+                    text = { Text(item) },
+                    onClick = {
+                        android.util.Log.d("ControlScreen", "Controller clicked: $item")
+                        expanded = false
+                        onControllerChange(item)
+                    }
+                )
+            }
+        }
+    }
+}
+
+/*
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ControllerSelectorRow(
+    selectedController: String,
+    availableControllers: List<String>,
+    onControllerChange: (String) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { expanded = !expanded },
+            modifier = Modifier.weight(1f)
+        ) {
+            OutlinedTextField(
+                value = selectedController,
+                onValueChange = {},
+                readOnly = true,
+                singleLine = true,
+                modifier = Modifier
+                    .menuAnchor()
+                    .fillMaxWidth(),
+                textStyle = MaterialTheme.typography.bodyMedium,
+                trailingIcon = {
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                }
+            )
+
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                availableControllers.forEach { item ->
+                    DropdownMenuItem(
+                        text = { Text(item) },
+                        onClick = {
+                            onControllerChange(item)
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
+    }
+}*/

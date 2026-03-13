@@ -28,16 +28,17 @@ data class HistoryRowUi(
 
 data class GeneralParamsUi(
     val autoStart: String = "",
-    val waterDuration: String = "",
-    val manualDuration: String = "",
+    val waterDuration: Int = 0,
+    val manualDuration: Int = 0,
     val feedEnabled: Boolean = false,
-    val feedDuration: String = "",
+    val feedDuration: Int = 0,
     val updateFrequency: String = ""
 )
 
 data class ControlUiState(
-    val controllerName: String = "",
-    val macAddress: String = "",
+    val selectedControllerName: String = "",
+    val selectedMacAddress: String = "",
+    val availableControllers: List<ControllerUi> = emptyList(),
     val zone: String = "Zone 1",
     val availableZones: List<String> = listOf("Zone 1", "Zone 2", "Zone 3"),
     val currentStatus: String = "",
@@ -47,6 +48,11 @@ data class ControlUiState(
     val generalParams: GeneralParamsUi = GeneralParamsUi(),
     val isLoading: Boolean = false,
     val errorMessage: String? = null
+)
+
+data class ControllerUi(
+    val controllerName: String,
+    val macAddress: String
 )
 
 class ControlViewModel(app: Application) : AndroidViewModel(app) {
@@ -63,7 +69,7 @@ class ControlViewModel(app: Application) : AndroidViewModel(app) {
                 val settings = settingsStore.settingsFlow.first()
 
                 api = PlantsApiFactory.create(settings)
-                loadControlData()
+                loadInitialData()
             } catch (exception: Exception) {
                 uiState.update {
                     it.copy(
@@ -87,16 +93,14 @@ class ControlViewModel(app: Application) : AndroidViewModel(app) {
             try {
                 val service = api ?: throw IllegalStateException("API non initialisée")
 
-                val controllers = service.getControllerList()
-                val controller = controllers.firstOrNull()
-                    ?: throw IllegalStateException("Aucun contrôleur trouvé")
+                val controllerName = uiState.value.selectedControllerName
+                val macAddress = uiState.value.selectedMacAddress
 
-                val controllerName = controller.controlername.toString()
-                val macAddress = controller.macaddress.toString()
+                if (controllerName.isBlank() || macAddress.isBlank()) {
+                    throw IllegalStateException("Aucun contrôleur sélectionné")
+                }
 
-                val infoList = service.getInfo(macAddress)
-                val info = infoList.firstOrNull()
-
+                val info = service.getInfo(macAddress)
                 val chrono = service.getChrono(macAddress)
                 val genParam = service.getGenParam(controllerName)
                 val schedules = service.getScheduleList(
@@ -111,8 +115,6 @@ class ControlViewModel(app: Application) : AndroidViewModel(app) {
 
                 uiState.update {
                     it.copy(
-                        controllerName = controllerName,
-                        macAddress = macAddress,
                         currentStatus = if (chrono.remain > 0) {
                             "Arrosage en cours"
                         } else {
@@ -129,12 +131,12 @@ class ControlViewModel(app: Application) : AndroidViewModel(app) {
                         },
                         generalParams = GeneralParamsUi(
                             autoStart = autoStart,
-                            waterDuration = genParam.wateringDuration.toString(),
-                            manualDuration = genParam.manualDuration.toString(),
+                            waterDuration = genParam.wateringDuration,
+                            manualDuration = genParam.manualDuration,
                             feedEnabled =
-                            genParam.feeding == "1" ||
-                                    genParam.feeding.equals("true", ignoreCase = true) ||
-                                    genParam.feeding.equals("oui", ignoreCase = true),
+                            genParam.feeding == 1 ||
+                                    genParam.feeding.equals("true") ||
+                                    genParam.feeding.equals("oui"),
                             feedDuration = genParam.feedDuration,
                             updateFrequency = genParam.updatefreq.toString()
                         ),
@@ -210,5 +212,65 @@ class ControlViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun saveAll() {
+    }
+
+    fun loadInitialData() {
+        viewModelScope.launch {
+            uiState.update {
+                it.copy(
+                    isLoading = true,
+                    errorMessage = null
+                )
+            }
+
+            try {
+                val service = api ?: throw IllegalStateException("API non initialisée")
+
+                val controllers = service.getControllerList()
+
+                val controllerItems = controllers.map { controller ->
+                    ControllerUi(
+                        controllerName = controller.controlername.toString(),
+                        macAddress = controller.macaddress.toString()
+                    )
+                }
+
+                val firstController = controllerItems.firstOrNull()
+                    ?: throw IllegalStateException("Aucun contrôleur trouvé")
+
+                uiState.update {
+                    it.copy(
+                        availableControllers = controllerItems,
+                        selectedControllerName = firstController.controllerName,
+                        selectedMacAddress = firstController.macAddress
+                    )
+                }
+
+                loadControlData()
+            } catch (exception: Exception) {
+                uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = exception.message ?: "Erreur d'initialisation"
+                    )
+                }
+            }
+        }
+    }
+
+    fun onControllerChange(controllerName: String) {
+        android.util.Log.d("ControlVM", "onControllerChange called: $controllerName")
+        val selectedController = uiState.value.availableControllers.firstOrNull {
+            it.controllerName == controllerName
+        } ?: return
+
+        uiState.update {
+            it.copy(
+                selectedControllerName = selectedController.controllerName,
+                selectedMacAddress = selectedController.macAddress
+            )
+        }
+
+        loadControlData()
     }
 }
