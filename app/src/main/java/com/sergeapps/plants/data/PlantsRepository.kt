@@ -8,6 +8,7 @@ import com.sergeapps.plants.data.api.ItemDetailDto
 import com.sergeapps.plants.data.api.ItemListDto
 import com.sergeapps.plants.data.api.ItemUpsertDto
 import com.sergeapps.plants.data.api.LocationDto
+import com.sergeapps.plants.data.api.LogListDto
 import com.sergeapps.plants.data.api.PlantsApiService
 import com.sergeapps.plants.data.api.StockDetailDto
 import com.sergeapps.plants.data.api.StockListRowDto
@@ -346,6 +347,16 @@ class PlantsRepository(
 
     suspend fun getChrono(macAddress: String): ChronoDto {
         return api.getChrono(macAddress = macAddress)
+    }
+
+    suspend fun getLog(
+        macAddress: String,
+        limit: Int = 5
+    ): List<LogListDto> {
+        return api.getLog(
+            limit = limit,
+            macAddress = macAddress
+        )
     }
 }
 

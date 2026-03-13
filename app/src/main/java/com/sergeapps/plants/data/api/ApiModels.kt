@@ -254,11 +254,13 @@ data class ControllerListDto(
 @Serializable
 data class LogListDto(
     @SerialName("id")           val id: Int,
+    @SerialName("macaddress")   val macAddress: String,
     @SerialName("pointname")    val pointname: String,
     @SerialName("logdatetime")  val logdatetime: String,
     @SerialName("alnvalue")     val alnvalue: String,
     @SerialName("numvalue")     val numvalue: Int,
-    @SerialName("comment")      val comment: String
+    @SerialName("comment")      val comment: String,
+    @SerialName("pagenumber")   val pageNumber: Int
 )
 
 @Serializable

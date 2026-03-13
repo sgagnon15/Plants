@@ -188,7 +188,7 @@ interface PlantsApiService {
     @GET("log")
     suspend fun getLog(
         @Query("limit") limit: Int,
-        @Query("controlername") controlername: String
+        @Query("macaddress") macAddress: String
     ): List<LogListDto>
 
     @GET("schedulelist")

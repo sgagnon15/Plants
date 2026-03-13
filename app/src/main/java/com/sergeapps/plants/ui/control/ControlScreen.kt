@@ -55,6 +55,13 @@ import com.sergeapps.plants.vm.control.GeneralParamsUi
 import com.sergeapps.plants.vm.control.HistoryRowUi
 import com.sergeapps.plants.vm.control.ScheduleRowUi
 
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.ui.draw.alpha
+
 private val LightGray = Color(0xFFCCCCCC)
 private val FlowBlue = Color(0xFFB7CBFF)
 
@@ -110,6 +117,7 @@ fun ControlScreen(
                     SectionCard(title = "Actions") {
                         ActionHeader(
                             canSendAction = !state.selectedMacAddress.isNullOrBlank(),
+                            isWatering = state.currentStatus.contains("Arrosage", ignoreCase = true),
                             onWaterClick = onWaterClick,
                             onFeedClick = onFeedClick
                         )
@@ -153,7 +161,7 @@ fun ControlScreen(
                         }
                     }
                 }
-
+/*
                 item {
                     SectionCard(title = "Historique") {
                         Row(
@@ -174,7 +182,7 @@ fun ControlScreen(
                         HistoryTable(rows = state.historyRows)
                     }
                 }
-
+*/
                 item {
                     SectionCard(title = "Paramètres généraux") {
                         GeneralParamsContent(
@@ -216,9 +224,26 @@ fun ControlScreen(
 @Composable
 private fun ActionHeader(
     canSendAction: Boolean,
+    isWatering: Boolean,
     onWaterClick: () -> Unit,
     onFeedClick: () -> Unit
 ) {
+    val infiniteTransition = rememberInfiniteTransition(label = "watering")
+
+    val alpha = if (isWatering) {
+        infiniteTransition.animateFloat(
+            initialValue = 1f,
+            targetValue = 0.2f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = 900),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "watering_alpha"
+        ).value
+    } else {
+        1f
+    }
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.Center,
@@ -227,7 +252,9 @@ private fun ActionHeader(
         IconButton(
             onClick = onWaterClick,
             enabled = canSendAction,
-            modifier = Modifier.size(72.dp)
+            modifier = Modifier
+                .size(72.dp)
+                .alpha(alpha)
         ) {
             Text("💧", fontSize = 34.sp)
         }
@@ -413,29 +440,49 @@ private fun ScheduleEditorRow(
 private fun HistoryTable(
     rows: List<HistoryRowUi>
 ) {
+    if (rows.isEmpty()) {
+        Text(
+            text = "Aucun historique",
+            style = MaterialTheme.typography.bodyMedium
+        )
+        return
+    }
+
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         rows.forEach { row ->
-            Row(
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                CompactField(
-                    value = row.date,
-                    modifier = Modifier.weight(1f)
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    CompactField(
+                        value = row.logDateTime,
+                        modifier = Modifier.weight(1.4f)
+                    )
 
-                CompactField(
-                    value = row.state,
-                    modifier = Modifier.weight(1f)
-                )
+                    CompactField(
+                        value = row.pointName,
+                        modifier = Modifier.weight(1f)
+                    )
 
-                CompactField(
-                    value = row.flow,
-                    modifier = Modifier.weight(1f)
-                )
+                    CompactField(
+                        value = row.alnValue ?: row.numValue?.toString().orEmpty(),
+                        modifier = Modifier.weight(0.8f)
+                    )
+                }
+
+                if (!row.comment.isNullOrBlank()) {
+                    CompactField(
+                        value = row.comment,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
         }
     }

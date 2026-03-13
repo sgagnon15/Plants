@@ -16,7 +16,6 @@ import com.sergeapps.plants.data.PlantsRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 
 data class ScheduleRowUi(
     val id: Int,
@@ -26,9 +25,14 @@ data class ScheduleRowUi(
 )
 
 data class HistoryRowUi(
-    val date: String,
-    val state: String,
-    val flow: String
+    val id: Int,
+    val macAddress: String,
+    val pointName: String,
+    val logDateTime : String,
+    val alnValue : String? = null,
+    val numValue : Int? = 0,
+    val comment : String? = null,
+    val pageNumber : Int
 )
 
 data class GeneralParamsUi(
@@ -48,6 +52,7 @@ data class ControlUiState(
     val availableZones: List<String> = listOf("Zone 1", "Zone 2", "Zone 3"),
     val currentStatus: String = "",
     val waterFlow: String = "0",
+    val remain: String = "0",
     val scheduleRows: List<ScheduleRowUi> = emptyList(),
     val historyRows: List<HistoryRowUi> = emptyList(),
     val generalParams: GeneralParamsUi = GeneralParamsUi(),
@@ -102,7 +107,6 @@ class ControlViewModel(app: Application) : AndroidViewModel(app) {
 
             try {
                 val service = api ?: throw IllegalStateException("API non initialisée")
-
                 val controllerName = uiState.value.selectedControllerName
                 val macAddress = uiState.value.selectedMacAddress
 
@@ -110,7 +114,6 @@ class ControlViewModel(app: Application) : AndroidViewModel(app) {
                     throw IllegalStateException("Aucun contrôleur sélectionné")
                 }
 
-                val info = service.getInfo(macAddress)
                 val chrono = service.getChrono(macAddress)
                 val genParam = service.getGenParam(controllerName)
                 val schedules = service.getScheduleList(
@@ -150,16 +153,10 @@ class ControlViewModel(app: Application) : AndroidViewModel(app) {
                             feedDuration = genParam.feedDuration,
                             updateFrequency = genParam.updatefreq.toString()
                         ),
-                        historyRows = listOf(
-                            HistoryRowUi(
-                                date = info?.runningSince ?: "",
-                                state = info?.autoWatering ?: "",
-                                flow = chrono.waterFlow.toString()
-                            )
-                        ),
                         isLoading = false
                     )
                 }
+                loadHistory(5)
             } catch (exception: Exception) {
                 uiState.update {
                     it.copy(
@@ -216,7 +213,7 @@ class ControlViewModel(app: Application) : AndroidViewModel(app) {
             try {
 
                 repository.setWater(
-                    state = "on",
+                    state = "ON",
                     duration = 10,
                     macAddress = mac
                 )
@@ -246,6 +243,7 @@ class ControlViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun onSearchHistory() {
+        loadHistory(5)
     }
 
     fun saveAll() {
@@ -370,5 +368,44 @@ class ControlViewModel(app: Application) : AndroidViewModel(app) {
     override fun onCleared() {
         super.onCleared()
         stopChronoPolling()
+    }
+
+    fun loadHistory(limit: Int = 5) {
+
+        val macAddress = uiState.value.selectedMacAddress
+        if (macAddress.isBlank()) return
+
+        viewModelScope.launch {
+            try {
+                android.util.Log.d("ControlVM", "Calling getLog for $macAddress")
+
+                val logs = repository.getLog(
+                    macAddress = macAddress,
+                    limit = limit
+                )
+
+                uiState.update { currentState ->
+                    currentState.copy(
+                        historyRows = logs.map { log ->
+                            HistoryRowUi(
+                                id = log.id,
+                                macAddress = log.macAddress,
+                                pointName = log.pointname,
+                                logDateTime = log.logdatetime,
+                                alnValue = log.alnvalue,
+                                numValue = log.numvalue,
+                                comment = log.comment,
+                                pageNumber = log.pageNumber
+                            )
+                        }
+                    )
+                }
+            } catch (error: Exception) {
+                android.util.Log.e(
+                    "ControlVM",
+                    "Error loading log: ${error.message}"
+                )
+            }
+        }
     }
 }
