@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
@@ -38,7 +37,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -57,7 +55,6 @@ import com.sergeapps.plants.vm.control.GeneralParamsUi
 import com.sergeapps.plants.vm.control.HistoryRowUi
 import com.sergeapps.plants.vm.control.ScheduleRowUi
 
-private val DarkBg = Color.Black
 private val LightGray = Color(0xFFCCCCCC)
 private val FlowBlue = Color(0xFFB7CBFF)
 
@@ -611,54 +608,3 @@ private fun ControllerSelectorRow(
         }
     }
 }
-
-/*
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun ControllerSelectorRow(
-    selectedController: String,
-    availableControllers: List<String>,
-    onControllerChange: (String) -> Unit
-) {
-    var expanded by remember { mutableStateOf(false) }
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        ExposedDropdownMenuBox(
-            expanded = expanded,
-            onExpandedChange = { expanded = !expanded },
-            modifier = Modifier.weight(1f)
-        ) {
-            OutlinedTextField(
-                value = selectedController,
-                onValueChange = {},
-                readOnly = true,
-                singleLine = true,
-                modifier = Modifier
-                    .menuAnchor()
-                    .fillMaxWidth(),
-                textStyle = MaterialTheme.typography.bodyMedium,
-                trailingIcon = {
-                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-                }
-            )
-
-            ExposedDropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false }
-            ) {
-                availableControllers.forEach { item ->
-                    DropdownMenuItem(
-                        text = { Text(item) },
-                        onClick = {
-                            onControllerChange(item)
-                            expanded = false
-                        }
-                    )
-                }
-            }
-        }
-    }
-}*/
