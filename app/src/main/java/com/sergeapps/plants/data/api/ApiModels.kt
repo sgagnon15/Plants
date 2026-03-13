@@ -250,3 +250,32 @@ data class ControllerListDto(
     @SerialName("manualDuration")   val manualDuration: Int,
     @SerialName("rowstamp")         val rowstamp: Double
 )
+
+@Serializable
+data class LogListDto(
+    @SerialName("id")           val id: Int,
+    @SerialName("pointname")    val pointname: String,
+    @SerialName("logdatetime")  val logdatetime: String,
+    @SerialName("alnvalue")     val alnvalue: String,
+    @SerialName("numvalue")     val numvalue: Int,
+    @SerialName("comment")      val comment: String
+)
+
+@Serializable
+data class ScheduleListDto(
+    @SerialName("id")           val id: Int,
+    @SerialName("macaddress")   val macaddress: String,
+    @SerialName("starttime")    val starttime: String,
+    @SerialName("frequency")    val frequency: Int,
+    @SerialName("frequnit")     val frequnit: String,
+    @SerialName("duration")     val duration: Int,
+    @SerialName("zone")         val zone: String
+)
+
+@Serializable
+data class ChronoDto(
+    @SerialName("duration")  val duration: Int,
+    @SerialName("chrono")    val chrono: Int,
+    @SerialName("remain")    val remain: Int,
+    @SerialName("waterFlow") val waterFlow: Int
+)

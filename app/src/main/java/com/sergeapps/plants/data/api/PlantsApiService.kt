@@ -161,4 +161,39 @@ interface PlantsApiService {
     suspend fun deleteLocation(
         @Query("id") id: Int
     )
+
+    //  -----------------------------------------------------------------
+    // Controller
+    //  -----------------------------------------------------------------
+
+    @GET("info")
+    suspend fun getInfo(
+        @Query("macaddress") macAddress: String
+    ): List<ControlInfoDto>
+
+    @GET("chrono")
+    suspend fun getChrono(
+        @Query("macaddress") macAddress: String
+    ): ChronoDto
+
+    @GET("genparam")
+    suspend fun getGenParam(
+        @Query("controlername") controlername: String
+    ): GenParamDto
+
+    @GET("controlerlist")
+    suspend fun getControllerList(
+    ): List<ControllerListDto>
+
+    @GET("log")
+    suspend fun getLog(
+        @Query("limit") limit: Int,
+        @Query("controlername") controlername: String
+    ): List<LogListDto>
+
+    @GET("log")
+    suspend fun getLog(
+        @Query("macaddress") macAddress: String,
+        @Query("zone") zone: String
+    ): List<ScheduleListDto>
 }
