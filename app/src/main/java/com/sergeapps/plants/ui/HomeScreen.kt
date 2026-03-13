@@ -1,5 +1,6 @@
 package com.sergeapps.plants.ui
 
+import android.service.controls.Control
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -38,7 +39,8 @@ fun HomeScreen(
     onOpenInventory: () -> Unit,
     onOpenLocations: () -> Unit,
     onOpenSettings: () -> Unit,
-    onOpenBatchTransfer: () -> Unit
+    onOpenBatchTransfer: () -> Unit,
+    onOpenControl: () -> Unit
 ) {
     Scaffold(
         topBar = { TopAppBar(title = { Text("Gestion des plantes") }) }
@@ -110,9 +112,7 @@ fun HomeScreen(
                     title = "Contrôleur",
                     subtitle = "Contrôleur Arduino",
                     icon = painterResource(R.drawable.ic_arduino),
-                    onClick = {
-                        Toast.makeText(context, "À venir bientôt", Toast.LENGTH_SHORT).show()
-                    },
+                    onClick = onOpenControl,
                     modifier = Modifier.weight(1f)
                 )
 
