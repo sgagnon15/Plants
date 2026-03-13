@@ -5,6 +5,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,7 +25,8 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -36,8 +38,8 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -54,10 +56,7 @@ import com.sergeapps.plants.vm.control.ControlUiState
 import com.sergeapps.plants.vm.control.GeneralParamsUi
 import com.sergeapps.plants.vm.control.HistoryRowUi
 import com.sergeapps.plants.vm.control.ScheduleRowUi
-import androidx.compose.material3.CircularProgressIndicator
 
-
-private val SectionBlue = Color(0xFF00A9E8)
 private val DarkBg = Color.Black
 private val LightGray = Color(0xFFCCCCCC)
 private val FlowBlue = Color(0xFFB7CBFF)
@@ -85,116 +84,122 @@ fun ControlScreen(
                     }
                 }
             )
-        },
-        containerColor = DarkBg
+        }
     ) { innerPadding ->
 
-        LazyColumn(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(DarkBg)
                 .padding(innerPadding)
-                .padding(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            item {
-                ActionHeader(
-                    onWaterClick = onWaterClick,
-                    onFeedClick = onFeedClick
-                )
-            }
-
-            item {
-                ManualStatusRow(
-                    status = state.currentStatus,
-                    flow = state.waterFlow
-                )
-            }
-
-            item {
-                SectionTitle("Horaire")
-            }
-
-            item {
-                ZoneSelectorRow(
-                    zone = state.zone,
-                    availableZones = state.availableZones,
-                    onZoneChange = onZoneChange,
-                    onAddClick = onAddSchedule
-                )
-            }
-
-            items(state.scheduleRows, key = { it.id }) { row ->
-                ScheduleEditorRow(
-                    row = row,
-                    onChange = { updatedRow ->
-                        onScheduleChange(row.id, updatedRow)
-                    },
-                    onDelete = {
-                        onDeleteSchedule(row.id)
-                    }
-                )
-            }
-
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    SectionTitle(
-                        title = "Historique",
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    IconButton(onClick = onSearchHistory) {
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = "Chercher historique",
-                            tint = Color(0xFF94B843)
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                item {
+                    SectionCard(title = "Actions") {
+                        ActionHeader(
+                            onWaterClick = onWaterClick,
+                            onFeedClick = onFeedClick
                         )
                     }
                 }
-            }
 
-            item {
-                HistoryTable(rows = state.historyRows)
-            }
-
-            item {
-                SectionTitle("Paramètres généraux")
-            }
-
-            item {
-                GeneralParamsCard(
-                    params = state.generalParams
-                )
-            }
-
-            state.errorMessage?.let { error ->
                 item {
-                    Text(
-                        text = error,
-                        color = Color.Red,
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
+                    SectionCard(title = "Statut") {
+                        ManualStatusRow(
+                            status = state.currentStatus,
+                            flow = state.waterFlow
+                        )
+                    }
+                }
+
+                item {
+                    SectionCard(title = "Horaire") {
+                        ZoneSelectorRow(
+                            zone = state.zone,
+                            availableZones = state.availableZones,
+                            onZoneChange = onZoneChange,
+                            onAddClick = onAddSchedule
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            state.scheduleRows.forEach { row ->
+                                ScheduleEditorRow(
+                                    row = row,
+                                    onChange = { updatedRow ->
+                                        onScheduleChange(row.id, updatedRow)
+                                    },
+                                    onDelete = {
+                                        onDeleteSchedule(row.id)
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+
+                item {
+                    SectionCard(title = "Historique") {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Spacer(modifier = Modifier.weight(1f))
+
+                            IconButton(onClick = onSearchHistory) {
+                                Icon(
+                                    imageVector = Icons.Default.Search,
+                                    contentDescription = "Chercher historique",
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+
+                        HistoryTable(rows = state.historyRows)
+                    }
+                }
+
+                item {
+                    SectionCard(title = "Paramètres généraux") {
+                        GeneralParamsContent(
+                            params = state.generalParams
+                        )
+                    }
+                }
+
+                state.errorMessage?.let { error ->
+                    item {
+                        Text(
+                            text = error,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
+                }
+
+                item {
+                    Spacer(modifier = Modifier.height(24.dp))
                 }
             }
 
-            item {
-                Spacer(modifier = Modifier.height(24.dp))
+            if (state.isLoading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.35f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
             }
-        }
-        if (state.isLoading) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator(color = Color.White)
-            }
-            return@Scaffold
         }
     }
 }
@@ -205,9 +210,7 @@ private fun ActionHeader(
     onFeedClick: () -> Unit
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color.Black),
+        modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -235,31 +238,20 @@ private fun ManualStatusRow(
     flow: String
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(LightGray)
-            .padding(4.dp),
+        modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
         CompactField(
             value = status,
-            modifier = Modifier.width(110.dp),
-            backgroundColor = Color(0xFFE6E6E6)
-        )
-
-        Spacer(modifier = Modifier.width(6.dp))
-
-        CompactField(
-            value = "",
-            modifier = Modifier.width(40.dp),
-            backgroundColor = Color(0xFFE6E6E6)
+            modifier = Modifier.width(120.dp),
+            backgroundColor = LightGray
         )
 
         Spacer(modifier = Modifier.width(6.dp))
 
         CompactField(
             value = flow,
-            modifier = Modifier.width(70.dp),
+            modifier = Modifier.width(80.dp),
             backgroundColor = FlowBlue
         )
 
@@ -267,28 +259,8 @@ private fun ManualStatusRow(
 
         CompactField(
             value = "ml/min",
-            modifier = Modifier.width(70.dp),
+            modifier = Modifier.width(80.dp),
             backgroundColor = FlowBlue
-        )
-    }
-}
-
-@Composable
-private fun SectionTitle(
-    title: String,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(SectionBlue)
-            .padding(vertical = 8.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = title,
-            color = Color.White,
-            fontWeight = FontWeight.Bold
         )
     }
 }
@@ -304,37 +276,31 @@ private fun ZoneSelectorRow(
     var expanded by remember { mutableStateOf(false) }
 
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFF404040))
-            .padding(4.dp),
+        modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        CompactLabel("Zone", modifier = Modifier.width(40.dp))
+        Text(
+            text = "Zone",
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.width(48.dp)
+        )
 
-        Spacer(modifier = Modifier.width(6.dp))
+        Spacer(modifier = Modifier.width(8.dp))
 
         ExposedDropdownMenuBox(
             expanded = expanded,
             onExpandedChange = { expanded = !expanded },
-            modifier = Modifier.width(170.dp)
+            modifier = Modifier.weight(1f)
         ) {
             OutlinedTextField(
                 value = zone,
-                onValueChange = onZoneChange,
+                onValueChange = {},
+                readOnly = true,
                 singleLine = true,
                 modifier = Modifier
                     .menuAnchor()
-                    .height(34.dp),
-                textStyle = TextStyle(fontSize = 12.sp, color = Color.White),
-                colors = TextFieldDefaults.colors(
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White,
-                    focusedIndicatorColor = Color.White,
-                    unfocusedIndicatorColor = Color.LightGray,
-                    focusedContainerColor = Color(0xFF5A5A5A),
-                    unfocusedContainerColor = Color(0xFF5A5A5A)
-                ),
+                    .fillMaxWidth(),
+                textStyle = MaterialTheme.typography.bodyMedium,
                 trailingIcon = {
                     ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
                 }
@@ -376,7 +342,7 @@ private fun ZoneSelectorRow(
             Icon(
                 imageVector = Icons.Default.Add,
                 contentDescription = "Ajouter",
-                tint = Color(0xFF3BA6FF)
+                tint = MaterialTheme.colorScheme.primary
             )
         }
     }
@@ -397,18 +363,18 @@ private fun ScheduleEditorRow(
         EditableCompactField(
             value = row.startTime,
             onValueChange = { onChange(row.copy(startTime = it)) },
-            modifier = Modifier.width(70.dp)
+            modifier = Modifier.width(80.dp)
         )
 
-        Spacer(modifier = Modifier.width(6.dp))
+        Spacer(modifier = Modifier.width(8.dp))
 
         EditableCompactField(
             value = row.duration,
             onValueChange = { onChange(row.copy(duration = it)) },
-            modifier = Modifier.width(70.dp)
+            modifier = Modifier.width(80.dp)
         )
 
-        Spacer(modifier = Modifier.width(6.dp))
+        Spacer(modifier = Modifier.width(8.dp))
 
         Switch(
             checked = row.fertilizer,
@@ -424,7 +390,7 @@ private fun ScheduleEditorRow(
             Icon(
                 imageVector = Icons.Default.Delete,
                 contentDescription = "Supprimer",
-                tint = Color.Red
+                tint = MaterialTheme.colorScheme.error
             )
         }
     }
@@ -435,11 +401,8 @@ private fun HistoryTable(
     rows: List<HistoryRowUi>
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color.Black)
-            .padding(4.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         rows.forEach { row ->
             Row(
@@ -448,18 +411,17 @@ private fun HistoryTable(
             ) {
                 CompactField(
                     value = row.date,
-                    modifier = Modifier.weight(1f),
-                    backgroundColor = Color(0xFF5A5A5A)
+                    modifier = Modifier.weight(1f)
                 )
+
                 CompactField(
                     value = row.state,
-                    modifier = Modifier.weight(1f),
-                    backgroundColor = Color(0xFF5A5A5A)
+                    modifier = Modifier.weight(1f)
                 )
+
                 CompactField(
                     value = row.flow,
-                    modifier = Modifier.weight(1f),
-                    backgroundColor = Color(0xFF5A5A5A)
+                    modifier = Modifier.weight(1f)
                 )
             }
         }
@@ -467,24 +429,18 @@ private fun HistoryTable(
 }
 
 @Composable
-private fun GeneralParamsCard(
+private fun GeneralParamsContent(
     params: GeneralParamsUi
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF101010))
+    Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(8.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            ParamRow("Départ arrosage auto", params.autoStart)
-            ParamRow("Durée d'arrosage", params.waterDuration)
-            ParamRow("Durée arrosage manuel", params.manualDuration)
-            ParamRow("Fertilisation", if (params.feedEnabled) "Oui" else "Non")
-            ParamRow("Durée fertilisation", params.feedDuration)
-            ParamRow("Fréquence MAJ", params.updateFrequency)
-        }
+        ParamRow("Départ arrosage auto", params.autoStart)
+        ParamRow("Durée d'arrosage", params.waterDuration)
+        ParamRow("Durée arrosage manuel", params.manualDuration)
+        ParamRow("Fertilisation", if (params.feedEnabled) "Oui" else "Non")
+        ParamRow("Durée fertilisation", params.feedDuration)
+        ParamRow("Fréquence MAJ", params.updateFrequency)
     }
 }
 
@@ -499,34 +455,13 @@ private fun ParamRow(
     ) {
         Text(
             text = label,
-            color = Color.White,
-            fontSize = 13.sp,
-            modifier = Modifier.width(180.dp)
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.width(190.dp)
         )
 
         CompactField(
             value = value,
-            modifier = Modifier.width(100.dp),
-            backgroundColor = Color(0xFF303030)
-        )
-    }
-}
-
-@Composable
-private fun CompactLabel(
-    text: String,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier
-            .background(Color(0xFF5A5A5A))
-            .padding(horizontal = 6.dp, vertical = 4.dp),
-        contentAlignment = Alignment.CenterStart
-    ) {
-        Text(
-            text = text,
-            color = Color.White,
-            fontSize = 11.sp
+            modifier = Modifier.width(110.dp)
         )
     }
 }
@@ -535,18 +470,26 @@ private fun CompactLabel(
 private fun CompactField(
     value: String,
     modifier: Modifier = Modifier,
-    backgroundColor: Color = Color(0xFF5A5A5A)
+    backgroundColor: Color = MaterialTheme.colorScheme.surfaceVariant
 ) {
     Box(
         modifier = modifier
-            .background(backgroundColor)
-            .border(1.dp, Color.LightGray, RoundedCornerShape(2.dp))
-            .padding(horizontal = 6.dp, vertical = 4.dp),
+            .background(backgroundColor, RoundedCornerShape(8.dp))
+            .border(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.outlineVariant,
+                shape = RoundedCornerShape(8.dp)
+            )
+            .padding(horizontal = 8.dp, vertical = 6.dp),
         contentAlignment = Alignment.CenterStart
     ) {
         Text(
             text = value,
-            color = Color.Black.takeOrWhite(backgroundColor),
+            color = if (backgroundColor == LightGray || backgroundColor == FlowBlue) {
+                Color.Black
+            } else {
+                MaterialTheme.colorScheme.onSurface
+            },
             fontSize = 12.sp,
             maxLines = 1
         )
@@ -564,16 +507,49 @@ private fun EditableCompactField(
         onValueChange = onValueChange,
         singleLine = true,
         textStyle = TextStyle(
-            color = Color.White,
+            color = MaterialTheme.colorScheme.onSurface,
             fontSize = 12.sp
         ),
         modifier = modifier
-            .background(Color(0xFF303030), RoundedCornerShape(2.dp))
-            .border(1.dp, Color.LightGray, RoundedCornerShape(2.dp))
-            .padding(horizontal = 6.dp, vertical = 4.dp)
+            .background(
+                MaterialTheme.colorScheme.surfaceVariant,
+                RoundedCornerShape(8.dp)
+            )
+            .border(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.outlineVariant,
+                shape = RoundedCornerShape(8.dp)
+            )
+            .padding(horizontal = 8.dp, vertical = 6.dp)
     )
 }
 
-private fun Color.takeOrWhite(background: Color): Color {
-    return if (background == FlowBlue || background == LightGray) Color.Black else Color.White
+@Composable
+private fun SectionCard(
+    title: String,
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            Divider(
+                modifier = Modifier.padding(vertical = 8.dp),
+                color = MaterialTheme.colorScheme.outlineVariant
+            )
+
+            content()
+        }
+    }
 }
