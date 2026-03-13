@@ -12,7 +12,6 @@ import okhttp3.MediaType.Companion.toMediaType
 import java.util.concurrent.TimeUnit
 
 object PlantsApiFactory {
-
     fun create(
         settings: PlantsSettings
     ): PlantsApiService {

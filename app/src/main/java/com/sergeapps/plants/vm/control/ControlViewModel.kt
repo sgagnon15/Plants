@@ -4,8 +4,10 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.sergeapps.plants.data.PlantsRepository
+import com.sergeapps.plants.data.PlantsSettings
 import com.sergeapps.plants.data.PlantsSettingsStore
 import com.sergeapps.plants.data.api.PlantsApiFactory
+import com.sergeapps.plants.vm.inventory.InventoryDetailUiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -46,14 +48,10 @@ data class ControlUiState(
     val errorMessage: String? = null
 )
 
-class ControlViewModel(
-    application: Application
-) : AndroidViewModel(application) {
+class ControlViewModel(app: Application) : AndroidViewModel(app) {
+    private val settingsStore = PlantsSettingsStore(app)
+    private var repository: PlantsRepository? = null
 
-    private val repository = PlantsRepository(
-        api = PlantsApiFactory.create(),
-        settingsStore = PlantsSettingsStore(application)
-    )
 
     private val uiState = MutableStateFlow(
         ControlUiState(

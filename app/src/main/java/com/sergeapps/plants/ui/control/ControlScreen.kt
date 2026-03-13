@@ -50,40 +50,10 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
-data class ScheduleRowUi(
-    val id: Int,
-    val startTime: String = "",
-    val duration: String = "",
-    val fertilizer: Boolean = false
-)
-
-data class HistoryRowUi(
-    val date: String,
-    val state: String,
-    val flow: String
-)
-
-data class GeneralParamsUi(
-    val autoStart: String = "",
-    val waterDuration: String = "",
-    val manualDuration: String = "",
-    val feedEnabled: Boolean = false,
-    val feedDuration: String = "",
-    val updateFrequency: String = ""
-)
-
-data class ControlUiState(
-    val zone: String = "",
-    val availableZones: List<String> = emptyList(),
-    val waterFlow: String = "0.00",
-    val currentStatus: String = "Arrosage en cours",
-    val scheduleRows: List<ScheduleRowUi> = emptyList(),
-    val historyRows: List<HistoryRowUi> = emptyList(),
-    val generalParams: GeneralParamsUi = GeneralParamsUi(),
-    val isLoading: Boolean = false,
-    val errorMessage: String? = null
-)
+import com.sergeapps.plants.vm.control.ControlUiState
+import com.sergeapps.plants.vm.control.GeneralParamsUi
+import com.sergeapps.plants.vm.control.HistoryRowUi
+import com.sergeapps.plants.vm.control.ScheduleRowUi
 
 private val SectionBlue = Color(0xFF00A9E8)
 private val DarkBg = Color.Black

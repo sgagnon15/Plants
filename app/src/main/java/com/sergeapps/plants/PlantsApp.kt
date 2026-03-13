@@ -13,13 +13,12 @@ import com.sergeapps.plants.ui.item.ItemsListScreen
 import com.sergeapps.plants.ui.SettingsScreen
 import com.sergeapps.plants.ui.batchtransfer.BatchTransferScreen
 import com.sergeapps.plants.ui.control.ControlScreen
-import com.sergeapps.plants.ui.control.ControlUiState
-import com.sergeapps.plants.ui.control.GeneralParamsUi
-import com.sergeapps.plants.ui.control.HistoryRowUi
-import com.sergeapps.plants.ui.control.ScheduleRowUi
 import com.sergeapps.plants.ui.inventory.InventoryScreen
 import com.sergeapps.plants.ui.inventory.InventoryDetailScreen
 import com.sergeapps.plants.ui.location.LocationsScreen
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.sergeapps.plants.vm.control.ControlViewModel
+import androidx.compose.runtime.collectAsState
 
 @Composable
 fun plantsApp() {
@@ -118,38 +117,20 @@ fun plantsApp() {
 
         // ---- CONTROL ----
 
-        composable("control") {
-            val state = ControlUiState(
-                zone = "Zone 1",
-                availableZones = listOf("Zone 1", "Zone 2", "Zone 3"),
-                waterFlow = "0.00",
-                scheduleRows = listOf(
-                    ScheduleRowUi(id = 1, startTime = "08:00", duration = "30", fertilizer = false),
-                    ScheduleRowUi(id = 2, startTime = "18:00", duration = "20", fertilizer = true)
-                ),
-                historyRows = listOf(
-                    HistoryRowUi("2026-03-12", "Arrosage", "120 ml"),
-                    HistoryRowUi("2026-03-11", "Fertilisation", "50 ml"),
-                    HistoryRowUi("2026-03-10", "Arrosage", "110 ml")
-                ),
-                generalParams = GeneralParamsUi(
-                    autoStart = "07:00",
-                    waterDuration = "30 sec",
-                    manualDuration = "20 sec",
-                    feedEnabled = true,
-                    feedDuration = "10 sec",
-                    updateFrequency = "15 min"
-                )
-            )
+        composable(route = Routes.Control) {
+            val controlViewModel: ControlViewModel = viewModel()
+            val state = controlViewModel.state.collectAsState().value
 
             ControlScreen(
                 state = state,
                 onBack = { navController.popBackStack() },
-                onZoneChange = {},
-                onAddSchedule = {},
-                onDeleteSchedule = {},
-                onScheduleChange = { _, _ -> },
-                onSearchHistory = {}
+                onZoneChange = controlViewModel::onZoneChange,
+                onAddSchedule = controlViewModel::addScheduleRow,
+                onDeleteSchedule = controlViewModel::deleteScheduleRow,
+                onScheduleChange = controlViewModel::updateScheduleRow,
+                onSearchHistory = controlViewModel::onSearchHistory,
+                onWaterClick = controlViewModel::onWaterClick,
+                onFeedClick = controlViewModel::onFeedClick
             )
         }
 
